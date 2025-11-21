@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 测试结果和日志
+fuzzer/*_results/
+fuzzer/*_test/
+fuzzer/test_*/
+fuzzer/enhanced_*/
+fuzzer/large_scale_*/
+fuzzer/*.log
+fuzzer/logs/
+fuzzer/test_logs/
+fuzzer/stats/
+fuzzer_results/
+test_results/
+
+# LaTeX编译产物
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# 文档编译产物（保留PDF，但排除中间文件）
+*.aux
+*.log
+*.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+
+# 大型文件（如果存在）
+*.zip
+*.tar.gz
+*.pdf
+!BSc*.pdf
+
+# Isabelle相关（如果很大）
+*.thy.cache
+
+# 特定的测试输出目录（但保留项目结构）
+fuzzer/results/
+fuzzer/output/
+

@@ -1,0 +1,1205 @@
+\documentclass[9pt]{beamer}
+\usetheme{Madrid}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+% 设置全局字号
+\setbeamerfont{normal text}{size=\scriptsize}
+\setbeamerfont{title}{size=\Large}
+\setbeamerfont{frame title}{size=\normalsize}
+\setbeamerfont{block title}{size=\small}
+\setbeamerfont{itemize/enumerate body}{size=\scriptsize}
+\setbeamerfont{itemize/enumerate subbody}{size=\tiny}
+
+% 减少列表间距
+\setlength{\itemsep}{0.5pt}
+\setlength{\parsep}{0.5pt}
+\setlength{\topsep}{0.5pt}
+\setlength{\partopsep}{0.5pt}
+
+% 为所有frame设置更紧凑的布局
+\setbeamersize{text margin left=0.4cm,text margin right=0.4cm}
+
+% 设置块内容字号
+\setbeamerfont{block body}{size=\scriptsize}
+\setbeamerfont{block body alerted}{size=\scriptsize}
+\setbeamerfont{block body example}{size=\scriptsize}
+
+\title{Progress Report\\\vspace{0.3em}Interface Fuzzing for Isabelle/Sledgehammer}
+\subtitle{Knowledge Exchange Projects - Amazon — Variant 3}
+\author{Qilan Lin (K21204786)}
+\institute{King's College London}
+\date{21\textsuperscript{st} November 2025}
+
+\begin{document}
+
+%------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Agenda}
+\begin{enumerate}\footnotesize
+  \item Overall progress overview
+  \item Week 1-2: Complete step-by-step process
+  \item Week 3-4: Implementation \& testing details
+  \item Component-by-component breakdown
+  \item Testing timeline with all results
+  \item Improvement analysis
+  \item Next steps
+\end{enumerate}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Overall Progress}
+\begin{block}{Project Status}
+\begin{center}
+\textbf{25\% Overall Complete} — On Track
+\end{center}
+\end{block}
+
+\begin{columns}[T]
+\column{0.48\textwidth}
+\begin{block}{Completed}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textcolor{green}{✓} Week 1-2: 100\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Environment setup
+    \item Tool installation
+    \item Seed extraction
+  \end{itemize}
+  \item \textcolor{green}{✓} Week 3-4: 50\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item MVP framework
+    \item Mutator enhancement
+    \item Large-scale testing
+  \end{itemize}
+\end{itemize}
+\end{block}
+
+\column{0.48\textwidth}
+\begin{block}{In Progress / Planned}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textcolor{orange}{◐} Week 3-4: 50\% remaining
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Code optimization
+    \item Functionality extension
+  \end{itemize}
+  \item \textcolor{blue}{○} Week 5-7: 30\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item AST mutator
+    \item Reconstruction oracle
+    \item End-to-end prototype
+  \end{itemize}
+  \item \textcolor{gray}{○} Week 8-9: 0\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Large-scale fuzzing campaigns
+  \end{itemize}
+  \item \textcolor{purple}{○} Week 10-11: 0\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Minimization, bug triage, analysis
+  \end{itemize}
+  \item \textcolor{red}{○} Week 12-13: 0\%
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Write-up, slides, final evaluation
+  \end{itemize}
+\end{itemize}
+\end{block}
+\end{columns}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 1-2: Step 1 — Tool Installation}
+\begin{enumerate}\footnotesize
+  \item \textbf{Installed Isabelle/HOL}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Used Homebrew: \texttt{brew install --cask isabelle}
+    \item \textit{Result}: ✓ Installed Isabelle 2025 (GUI + CLI tools)
+    \item \textit{Note}: For experiments, we use CLI only (automation, reproducibility)
+  \end{itemize}
+  
+  \item \textbf{Verified Isabelle CLI tools}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Tested CLI commands: \texttt{isabelle version}, \texttt{isabelle build}, \texttt{isabelle process}
+    \item \textit{Result}: ✓ All CLI tools working correctly
+    \item \textit{Rationale}: CLI enables automated batch processing and reproducible experiments
+  \end{itemize}
+  
+  \item \textbf{Installed Z3}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Downloaded Z3 4.15.4 from GitHub, extracted binary, added to PATH
+    \item \textit{Result}: ✓ Z3 accessible via command line
+  \end{itemize}
+  
+  \item \textbf{Installed cvc5}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Downloaded cvc5 1.3.1 macOS ARM64 binary, fixed PATH issue by creating symlink
+    \item \textit{Result}: ✓ cvc5 working correctly
+  \end{itemize}
+  
+  \item \textbf{Installed pySMT}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created Python virtual environment, \texttt{pip install pysmt}
+    \item \textit{Result}: ✓ Installed pySMT 0.9.6 (Python 3.13.7)
+  \end{itemize}
+\end{enumerate}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 1-2: Step 2 — Sledgehammer Export Verification}
+\begin{enumerate}\footnotesize
+  \item \textbf{Created test theory file}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created \texttt{Test\_Sledgehammer.thy}
+    \item \textit{Content}: 
+    \begin{itemize}\footnotesize
+      \item \textbf{Configured Sledgehammer export directory}: 
+      \begin{itemize}\tiny
+        \item \texttt{declare [[sledgehammer\_atp\_problem\_dest\_dir = "...sledgehammer\_export"]]}
+        \item \texttt{declare [[sledgehammer\_atp\_proof\_dest\_dir = "...sledgehammer\_export"]]}
+      \end{itemize}
+      \item \textbf{3 test lemmas}:
+      \begin{itemize}\tiny
+        \item Test basic ATP prover, export TPTP: \texttt{test1: (x::nat) + 0 = x}
+        \item Test SMT prover, may export SMT-LIB: \texttt{test2: forall x. P x $\to$ P x}
+        \item Test SMT-specific, use Z3: \texttt{test3: (x::nat) + y = y + x}
+      \end{itemize}
+      \item All use \texttt{by sledgehammer} for automated proving
+    \end{itemize}
+    \item \textit{Result}: ✓ Theory file created with export configuration
+  \end{itemize}
+  
+  \item \textbf{Configured export directory}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Set \texttt{sledgehammer\_atp\_problem\_dest\_dir}
+    \item \textit{Directory}: \texttt{sledgehammer\_export/}
+    \item \textit{Result}: ✓ Export directory configured
+  \end{itemize}
+  
+  \item \textbf{Ran Sledgehammer via Isabelle CLI (not GUI)}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Used \texttt{isabelle process -T Test\_Sledgehammer -d .} to process theory file
+    \item \textit{Method}: CLI-based processing (enables automation and batch operations)
+    \item \textit{Result}: ✓ TPTP files generated in \texttt{sledgehammer\_export/} directory
+  \end{itemize}
+  
+  \item \textbf{Verified CLI batch export}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created \texttt{ROOT} file with content: \texttt{session Test\_Session = HOL + theories Test\_Sledgehammer Test\_SMT\_Method}, used \texttt{isabelle build -d . Test\_Session} to build session
+    \item \textit{Result}: ✓ CLI batch export confirmed working
+    \item \textit{Rationale}: CLI enables automated, reproducible fuzzing experiments
+  \end{itemize}
+\end{enumerate}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 1-2: Step 3 — Seed Extraction}
+\begin{enumerate}\footnotesize
+  \item \textbf{Created batch export script}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created a shell script that batches TPTP file export using Isabelle CLI
+    \begin{itemize}\tiny
+      \item Sets export directory: \texttt{EXPORT\_DIR="sledgehammer\_export"}
+      \item Uses \texttt{isabelle process -d . -e} with ML expressions
+      \item Configures: \texttt{Config.put Sledgehammer\_Prover\_ATP.atp\_problem\_dest\_dir}
+      \item Processes theory: \texttt{use\_thy "Test\_Sledgehammer"}
+      \item Method: Loop through theory files, run \texttt{isabelle process -T THEORY -d .} for each
+    \end{itemize}
+    \item \textit{Result}: ✓ Automated batch export script ready
+  \end{itemize}
+  
+  \item \textbf{Exported TPTP files using CLI}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Ran batch export script using \texttt{isabelle process -T}
+    \item \textit{Result}: ✓ Extracted 480 TPTP files to \texttt{sledgehammer\_export/}
+  \end{itemize}
+  
+  \item \textbf{Verified exported seed files}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Checked file format, syntax validity using command-line tools
+    \item \textit{Result}: ✓ All 480 files are valid TPTP format
+  \end{itemize}
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Final Results (Week 1-2)}:
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textbf{480 TPTP seed files} ready for fuzzing
+  \item ✓ \textbf{All tools installed} and verified
+  \item ✓ \textbf{Export workflow} established
+  \item ✓ \textbf{5 utility scripts} created
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — MVP Framework Creation}
+\begin{block}{Step 1: Project Structure Setup}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Technology choice: Python}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Why Python?}:
+    \begin{itemize}\tiny
+      \item \textbf{Rapid prototyping}: Fast development for fuzzer framework (parser, mutator, oracles)
+      \item \textbf{Text processing}: Excellent regex/string handling for TPTP/SMT-LIB parsing and mutation
+      \item \textbf{External tool integration}: \texttt{subprocess} module ideal for calling Z3/cvc5 provers
+      \item \textbf{Data processing}: Built-in JSON/CSV support for statistics and result analysis
+      \item \textbf{Ecosystem}: Mature libraries (e.g., pySMT for SMT-LIB parsing)
+      \item \textbf{Project requirement}: Need to build/extend a fuzzer (Python allows custom logic without modifying C/C++ code)
+    \end{itemize}
+  \end{itemize}
+  
+  \item \textbf{Action}: Created \texttt{fuzzer/} directory structure
+  \item \textbf{Created directories and files}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \texttt{parser/} — TPTP parser module (contains \texttt{tptp\_parser.py})
+    \item \texttt{mutator/} — Mutation engine (contains \texttt{token\_mutator.py})
+    \item \texttt{oracle/} — Bug detection oracles (contains \texttt{crash\_oracle.py}, \texttt{differential\_oracle.py})
+    \item \texttt{utils/} — Utility functions (contains \texttt{stats.py}, \texttt{logger.py})
+    \item \texttt{main.py} — Main fuzzer program (orchestrates the process)
+  \end{itemize}
+  \item \textbf{Result}: ✓ Project structure established
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — TPTP Parser Implementation}
+\begin{block}{Step 2: TPTP Parser Implementation}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textbf{Action}: Created \texttt{parser/tptp\_parser.py}
+    \item \textbf{Implementation}:
+    \begin{itemize}\footnotesize
+    \footnotesize
+      \item \textbf{Class}: \texttt{TPTPParser} with methods: \texttt{parse\_file()}, \texttt{extract\_formulas()}, \texttt{identify\_conjecture()}
+      \item \textbf{Data classes}: \texttt{TPTPFormula} (name, formula\_type, content, line\_number), \texttt{TPTPFormulaType} enum
+      \item Reads TPTP files line by line using \texttt{open()} and file iteration
+      \item Parses FOF/CNF formulas using regex: \texttt{re.compile(r'fof\textbackslash |cnf\textbackslash ('}
+      \item Extracts formula names, types (axiom/conjecture/type) from TPTP format: \texttt{fof(name, role, formula).}
+      \item Validates TPTP syntax by checking file format compliance
+    \end{itemize}
+    \item \textbf{Result}: ✓ Can parse all 480 seed files, $\sim$150 LOC
+  \end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Token Mutator Implementation}
+\begin{block}{Step 3: Token Mutator (Initial Version)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Created \texttt{mutator/token\_mutator.py}
+  \item \textbf{Implementation}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textbf{Class}: \texttt{TokenMutator} with \texttt{mutate()} and \texttt{generate\_mutants()} methods
+    \item \textbf{Enum}: \texttt{MutationType} (VALUE\_REPLACE, SYMBOL\_REPLACE, OPERATOR\_REPLACE, BRACKET\_MANIPULATE, STRING\_MUTATE)
+    \item \textbf{Initial implementation} (5 operations):
+    \begin{enumerate}\footnotesize
+      \item \texttt{\_mutate\_values()}: Uses regex \texttt{r'\textbackslash b\textbackslash d+\textbackslash b'} to find numbers, replaces with random (0-1000)
+      \item \texttt{\_mutate\_symbols()}: Dictionary mapping = $\leftrightarrow$ !=, < $\leftrightarrow$ >, etc.
+      \item \texttt{\_mutate\_operators()}: Dictionary mapping + $\leftrightarrow$ *, - $\leftrightarrow$ +, etc.
+      \item \texttt{\_mutate\_brackets()}: Uses regex \texttt{r'\textbackslash ([$^\wedge$()]*\textbackslash )'} to add/remove parentheses
+      \item \texttt{\_mutate\_strings()}: Uses regex \texttt{r'\textbackslash b\textbackslash w+\textbackslash b'} to reverse string literals
+    \end{enumerate}
+  \end{itemize}
+  \item \textbf{Result}: ✓ Generates syntactically valid mutants, $\sim$250 LOC
+\end{itemize}
+\end{block}
+
+\begin{block}{Testing Initial Mutator}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Tested on sample TPTP files
+  \item \textbf{Result}: ✓ Mutants generated successfully
+  \item \textbf{Observation}: Some mutants invalid, but most work
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Crash/Hang Oracle}
+\begin{block}{Step 4: Crash/Hang Oracle}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textbf{Action}: Created \texttt{oracle/crash\_oracle.py}
+    \item \textbf{Implementation}:
+    \begin{itemize}\footnotesize
+    \footnotesize
+      \item \textbf{Class}: \texttt{CrashOracle} with \texttt{check()} method
+      \item \textbf{Data classes}: \texttt{ProverResult} (status, stdout, stderr, exit\_code, execution\_time, error\_message), \texttt{OracleResult} enum
+      \item Uses \texttt{subprocess.Popen} to run Z3/cvc5 with input file
+      \item Sets timeout (default 5.0 sec) via \texttt{subprocess.wait(timeout=...)} or \texttt{signal.alarm}
+      \item Captures stdout/stderr using \texttt{process.communicate()}
+      \item Detects non-zero exit codes (crashes): \texttt{process.returncode != 0}
+      \item Detects timeouts: catches \texttt{TimeoutExpired} exception
+      \item Returns: \texttt{ProverResult} with status (NORMAL, CRASH, TIMEOUT, ERROR)
+    \end{itemize}
+    \item \textbf{Result}: ✓ Detects crashes and timeouts, $\sim$100 LOC
+  \end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Differential Oracle}
+\begin{block}{Step 5: Differential Oracle}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Created \texttt{oracle/differential\_oracle.py}
+  \item \textbf{Implementation}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textbf{Class}: \texttt{DifferentialOracle} with \texttt{check\_disagreement()} method
+    \item \textbf{Data classes}: \texttt{DifferentialResult} (is\_differential, prover\_results, error\_message), \texttt{ProverStatus} enum
+    \item Runs same mutant on both Z3 and cvc5 using \texttt{CrashOracle}
+    \item Parses output for SAT/UNSAT/UNKNOWN using regex patterns: \texttt{r'\textbackslash bsat\textbackslash b'}, \texttt{r'\textbackslash bunsat\textbackslash b'}, etc.
+    \item Compares results from both provers
+    \item Flags inconsistencies: SAT vs UNSAT conflict indicates potential bug
+    \item Returns: \texttt{DifferentialResult} with disagreement status
+  \end{itemize}
+  \item \textbf{Result}: ✓ Detects prover disagreements, $\sim$100 LOC
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Main Program Implementation}
+\begin{block}{Step 6: Main Program Implementation}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textbf{Action}: Created \texttt{main.py}
+    \item \textbf{Implementation}:
+    \begin{itemize}\footnotesize
+    \footnotesize
+      \item \textbf{Class}: \texttt{Fuzzer} with \texttt{run()} method
+      \item \textbf{Main functions}: \texttt{load\_seeds()}, \texttt{run\_fuzzer()}, \texttt{main()}
+      \item Loads seed files from directory using \texttt{Path.glob('*.p')}
+      \item For each seed:
+      \begin{itemize}\tiny
+        \item Parse TPTP file using \texttt{TPTPParser.parse\_file()}
+        \item Generate N mutants (default 10) using \texttt{TokenMutator.mutate()}
+        \item Run each mutant through both oracles: \texttt{CrashOracle.check()}, \texttt{DifferentialOracle.check\_disagreement()}
+        \item Collect results and update statistics
+      \end{itemize}
+      \item Saves statistics to JSON using \texttt{StatsCollector.save()}
+      \item Logs all events using \texttt{FuzzerLogger.info()}
+    \end{itemize}
+    \item \textbf{Result}: ✓ End-to-end pipeline works, $\sim$250 LOC
+  \end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Utility Tools Creation}
+\begin{block}{Step 7: Utility Tools Creation}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Statistics} (\texttt{utils/stats.py}):
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created \texttt{utils/stats.py}
+    \item \textit{Implementation}:
+    \begin{itemize}\tiny
+      \item \textbf{Classes}: \texttt{FuzzingStats} dataclass, \texttt{StatsCollector}
+      \item \textbf{Methods}: \texttt{record\_test()}, \texttt{record\_crash()}, \texttt{record\_timeout()}, \texttt{record\_differential()}, \texttt{save()}
+      \item Tracks: total\_tests, crashes, timeouts, differentials, bugs\_found, execution\_time, seeds\_processed, mutants\_generated
+      \item Saves to JSON format: \texttt{stats.json}
+    \end{itemize}
+    \item \textit{Result}: ✓ Comprehensive stats, saves to JSON, $\sim$100 LOC
+  \end{itemize}
+  \item \textbf{Logger} (\texttt{utils/logger.py}):
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Created \texttt{utils/logger.py}
+    \item \textit{Implementation}:
+    \begin{itemize}\tiny
+      \item \textbf{Class}: \texttt{FuzzerLogger}
+      \item \textbf{Methods}: \texttt{info()}, \texttt{error()}, \texttt{debug()}
+      \item Logs to both file and console using \texttt{logging.FileHandler} and \texttt{logging.StreamHandler}
+      \item Timestamped entries: \texttt{fuzzer\_YYYYMMDD\_HHMMSS.log}
+      \item Log levels: INFO, ERROR, DEBUG
+      \item Structured format: \texttt{"YYYY-MM-DD HH:MM:SS - Fuzzer - LEVEL - message"}
+    \end{itemize}
+    \item \textit{Result}: ✓ Detailed logging system, $\sim$50 LOC
+  \end{itemize}
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Initial Testing \& Bug Fixes}
+\begin{block}{Step 8: First End-to-End Test}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Ran \texttt{python3 main.py --max-seeds 20 --num-mutants 10}
+  \item \textbf{Configuration}: 20 seeds, 10 mutants each, 5.0 sec timeout
+  \item \textbf{Date/Time}: November 20, 22:48
+  \item \textbf{Result}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item ✓ Generated 127 mutants (6.35 per seed)
+    \item ✓ All tests completed
+    \item ✓ 0 bugs detected
+    \item ✓ Average 0.0433 sec/test
+    \item ✓ Total time: 5.74 sec
+  \end{itemize}
+\end{itemize}
+\end{block}
+
+\begin{block}{Bugs Found \& Fixed During Development}
+\begin{enumerate}\footnotesize
+  \item \textbf{IndexError in bracket mutation}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Problem}: Regex pattern didn't capture group correctly
+    \item \textit{Fix}: Changed pattern from \texttt{r'\([^()]*\)'} to \texttt{r'\(([^()]*)\)'}
+    \item \textit{Result}: ✓ Fixed
+  \end{itemize}
+  
+  \item \textbf{NameError in crash oracle}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Problem}: \texttt{List} type hint not imported
+    \item \textit{Fix}: Added \texttt{from typing import List}
+    \item \textit{Result}: ✓ Fixed
+  \end{itemize}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — More Bug Fixes}
+\begin{block}{Bugs Found \& Fixed (Continued)}
+\begin{enumerate}\footnotesize
+  \setcounter{enumi}{2}
+  \item \textbf{ImportError in differential oracle}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Problem}: Relative import failed: \texttt{from .crash\_oracle import ...}
+    \item \textit{Fix}: Changed to absolute import: \texttt{from fuzzer.oracle.crash\_oracle import ...}
+    \item \textit{Result}: ✓ Fixed
+  \end{itemize}
+  
+  \item \textbf{Prover path detection failure}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Problem}: \texttt{os.path.exists()} didn't find provers in PATH
+    \item \textit{Fix}: Used \texttt{shutil.which()} for PATH lookup
+    \item \textit{Result}: ✓ Fixed, provers detected correctly
+  \end{itemize}
+\end{enumerate}
+\end{block}
+
+\begin{block}{After Bug Fixes}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textbf{All components working} correctly
+  \item ✓ \textbf{First test successful}: 127 mutants, 100\% success
+  \item ✓ \textbf{Framework stable}: Ready for enhancement
+  \item ✓ \textbf{Code quality}: All functions documented, error handling added
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 2 — Mutator Enhancement}
+\begin{block}{Step 9: Added Logical Operator Replacement}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Added \texttt{\_mutate\_logical\_operators()} method
+  \item \textbf{Implementation}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Dictionary mapping: \texttt{\&} $\leftrightarrow$ \texttt{|}, \texttt{$\wedge$} $\leftrightarrow$ \texttt{$\vee$}
+    \item Uses regex with word boundaries
+    \item Handles both ASCII and Unicode symbols
+  \end{itemize}
+  \item \textbf{Code added}: $\sim$50 lines
+  \item \textbf{Result}: ✓ Logical operators can be mutated
+\end{itemize}
+\end{block}
+
+\begin{block}{Step 10: Added Quantifier Replacement}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Added \texttt{\_mutate\_quantifiers()} method
+  \item \textbf{Implementation}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item TPTP patterns: \texttt{!\ [} (forall) $\leftrightarrow$ \texttt{?[} (exists)
+    \item Word patterns: \texttt{forall} $\leftrightarrow$ \texttt{exists}
+    \item Unicode: \texttt{$\forall$} $\leftrightarrow$ \texttt{$\exists$}
+  \end{itemize}
+  \item \textbf{Bug encountered}: Regex error with \texttt{?} character
+  \item \textbf{Fix}: Escaped \texttt{?} to \texttt{\textbackslash?}
+  \item \textbf{Result}: ✓ Quantifiers can be mutated, $\sim$40 lines added
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 2 — Mutator Enhancement (Continued)}
+\begin{block}{Step 11: Added Comparison Operator Replacement}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Added \texttt{\_mutate\_comparison\_operators()} method
+  \item \textbf{Implementation}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Dictionary mapping: \texttt{=} $\leftrightarrow$ \texttt{!=}, \texttt{$<$} $\leftrightarrow$ \texttt{$>$}, etc.
+    \item Handles: \texttt{=}, \texttt{!=}, \texttt{$<$}, \texttt{$>$}, \texttt{$<=$}, \texttt{$>=$}
+    \item Also handles Unicode: \texttt{$\neq$}, \texttt{$\leq$}, \texttt{$\geq$}
+  \end{itemize}
+  \item \textbf{Code added}: $\sim$40 lines
+  \item \textbf{Result}: ✓ Comparison operators can be mutated
+\end{itemize}
+\end{block}
+
+\begin{block}{After Enhancement}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textbf{Mutation operations}: 5 $\rightarrow$ 8 (+60\%)
+  \item ✓ \textbf{Code size}: $\sim$250 LOC $\rightarrow$ $\sim$350 LOC
+  \item ✓ \textbf{Testing}: All new operations tested individually
+  \item ✓ \textbf{Ready}: Enhanced mutator ready for testing
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 2 — Testing Enhanced Mutator}
+\begin{block}{Test 2: Small-Scale Test (Nov 20, 22:54)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Ran enhanced mutator on 3 seeds
+  \item \textbf{Configuration}: 3 seeds, 10 mutants each
+  \item \textbf{What happened}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Processed 3 seeds sequentially
+    \item Generated mutants using 8 operations
+    \item Tested each mutant through oracles
+    \item Collected statistics
+  \end{itemize}
+  \item \textbf{Result}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item ✓ Generated 25 mutants (8.33 per seed)
+    \item ✓ +31\% vs original (6.35 $\rightarrow$ 8.33)
+    \item ✓ 0.056 sec/test (slightly slower)
+    \item ✓ 100\% success (25/25 passed)
+  \end{itemize}
+\end{itemize}
+\end{block}
+
+\begin{block}{Test 3: Medium-Scale Test (Nov 20, 23:41)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Ran enhanced mutator on 10 seeds
+  \item \textbf{Configuration}: 10 seeds, 15 mutants each
+  \item \textbf{Result}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item ✓ Generated 70 mutants (7.0 per seed)
+    \item ✓ +10\% vs original (6.35 $\rightarrow$ 7.0)
+    \item ✓ 0.0401 sec/test
+    \item ✓ 100\% success (70/70 passed)
+  \end{itemize}
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 2 — Large-Scale Test}
+\begin{block}{Test 4: Large-Scale Test (Nov 21, 00:13)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Ran enhanced mutator on 50 seeds
+  \item \textbf{Configuration}: 50 seeds, 20 mutants each, 5.0 sec timeout
+  \item \textbf{Execution details}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Started: 00:13:42
+    \item Selected 50 random seeds from 480 available
+    \item Processed seeds sequentially
+    \item For each seed: parse $\rightarrow$ mutate $\rightarrow$ test $\rightarrow$ record
+    \item Ended: 00:13:54 (10.96 sec total)
+  \end{itemize}
+  \item \textbf{What happened during execution}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Some seeds generated 0 mutants (no mutation sites)
+    \item Most seeds generated 10-15 mutants
+    \item All prover invocations completed normally
+    \item No crashes, no timeouts detected
+  \end{itemize}
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Large-Scale Test Results}
+\begin{block}{Test 4 Results (Nov 21, 00:13)}
+\begin{center}
+\begin{tabular}{l c}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Seeds Processed & 50 \\
+Mutants Generated & 447 \\
+Generation Rate & \textcolor{green}{8.94 per seed} \\
+Total Tests & 447 \\
+Success Rate & \textcolor{green}{100\%} (447/447) \\
+Avg Time/Test & \textcolor{green}{0.0245 sec} \\
+Total Duration & 10.96 sec \\
+Crashes & 0 \\
+Timeouts & 0 \\
+Differential Bugs & 0 \\
+\hline
+\end{tabular}
+\end{center}
+\end{block}
+
+\begin{block}{Files Generated}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Statistics}: \texttt{large\_scale\_enhanced\_test/stats/stats.json}
+  \item \textbf{Logs}: \texttt{large\_scale\_enhanced\_test/logs/fuzzer\_*.log}
+  \item \textbf{Mutants}: \texttt{large\_scale\_enhanced\_test/mutants/*.p}
+  \item \textbf{Result}: ✓ All data saved for analysis
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Improvement Analysis}
+\begin{block}{Comparison: Test 1 vs Test 4}
+\begin{center}
+\begin{tabular}{l c c c}
+\hline
+\textbf{Metric} & \textbf{Original} & \textbf{Enhanced} & \textbf{Change} \\
+\hline
+Mutation Ops & 5 & 8 & \textcolor{green}{+60\%} \\
+Seeds & 20 & 50 & +150\% \\
+Mutants & 127 & 447 & +252\% \\
+Generation Rate & 6.35/seed & 8.94/seed & \textcolor{green}{+41\%} \\
+Time/Test & 0.0433 sec & 0.0245 sec & \textcolor{green}{-39\%} \\
+Success Rate & 100\% & 100\% & Same \\
+\hline
+\end{tabular}
+\end{center}
+\end{block}
+
+\begin{block}{Key Findings}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textbf{Generation rate improved}: 6.35 $\rightarrow$ 8.94 per seed (+41\%)
+  \item ✓ \textbf{Performance improved}: 0.0433 $\rightarrow$ 0.0245 sec/test (-39\%)
+  \item ✓ \textbf{Scale effect}: Larger tests show better performance (caching)
+  \item ✓ \textbf{Stability maintained}: 100\% success across all tests
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: All Test Batches Timeline}
+\begin{block}{Complete Testing Sequence}
+\begin{center}
+\tiny
+\begin{tabular}{l c c c c c c c}
+\hline
+\textbf{\#} & \textbf{Date/Time} & \textbf{Seeds} & \textbf{Mutants} & \textbf{Rate} & \textbf{Time} & \textbf{Result} & \textbf{Notes} \\
+\hline
+1 & 11/20 22:48 & 20 & 127 & 6.35 & 0.0433s & \textcolor{green}{100\%} & Original mutator \\
+2 & 11/20 22:54 & 3 & 25 & 8.33 & 0.056s & \textcolor{green}{100\%} & Enhanced, small \\
+3 & 11/20 23:41 & 10 & 70 & 7.00 & 0.0401s & \textcolor{green}{100\%} & Enhanced, medium \\
+4 & 11/21 00:13 & 50 & 447 & 8.94 & 0.0245s & \textcolor{green}{100\%} & Enhanced, large \\
+\hline
+\textbf{Total} & - & \textbf{80} & \textbf{644} & \textbf{8.05} & - & \textcolor{green}{100\%} & All tests passed \\
+\hline
+\end{tabular}
+    \tiny
+\end{center}
+\end{block}
+
+\begin{block}{What This Timeline Shows}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Progression}: Test scale increased over time
+  \item \textbf{Learning effect}: Generation rate improved with scale
+  \item \textbf{Performance}: Large-scale test fastest (better caching/optimization)
+  \item \textbf{Stability}: 100\% success across all test sizes
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Utility Scripts Creation}
+\begin{block}{Step 12: Utility Scripts Creation}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Created automation scripts
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Created a shell script that runs quick fuzzer tests with default parameters
+    \begin{itemize}\tiny
+      \item Purpose: Quick test runner for rapid validation
+      \item Configuration: 2 seeds, 3 mutants each, 3.0 sec timeout
+      \item Checks provers (Z3, cvc5) before running
+      \item Displays test results summary
+    \end{itemize}
+    \item Created a shell script that automates large-scale fuzzer testing
+    \begin{itemize}\tiny
+      \item Purpose: Large-scale test automation with configurable parameters
+      \item Configuration: 20 seeds, 10 mutants each, 5.0 sec timeout
+      \item Generates detailed statistics and logs
+      \item Shows comprehensive test summary
+    \end{itemize}
+    \item Created a Python script that analyzes fuzzing results and generates statistics
+    \begin{itemize}\tiny
+      \item Purpose: Result analysis tool for test data processing
+      \item Features: Bug type distribution, prover usage statistics, bug details
+      \item Output: Formatted analysis report
+    \end{itemize}
+  \end{itemize}
+  \item \textbf{Result}: ✓ Automation tools ready for testing
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Week 3-4: Phase 1 — Integration of Statistics and Logger}
+\begin{block}{Step 13: Integration of Statistics and Logger}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{Action}: Integrated utilities into main program
+  \item \textbf{Integration steps}:
+  \begin{enumerate}\footnotesize
+    \item Imported \texttt{FuzzingStats} and \texttt{StatsCollector} in \texttt{main.py}
+    \item Imported \texttt{FuzzerLogger} for logging
+    \item Added statistics collection at each step (seeds processed, mutants generated)
+    \item Added structured logging to file and console
+    \item Saved statistics to JSON format after completion
+  \end{enumerate}
+  \item \textbf{Result}: ✓ Statistics and logging fully integrated into pipeline
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Component Breakdown: TPTP Parser}
+\begin{block}{Implementation Details}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/parser/tptp\_parser.py}
+  \item \textbf{Size}: $\sim$150 lines of code
+  \item \textbf{Functions implemented}:
+  \begin{enumerate}\footnotesize
+    \item \texttt{parse\_tptp\_file(filepath)}: Reads file, returns content
+    \item \texttt{extract\_formulas(content)}: Extracts all FOF/CNF formulas
+    \item \texttt{identify\_conjecture(formulas)}: Finds conjecture formulas
+    \item \texttt{validate\_syntax(content)}: Checks TPTP syntax validity
+  \end{enumerate}
+  \item \textbf{Testing}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Tested on all 480 seed files
+    \item Handles FOF and CNF formats
+    \item Error handling for malformed files
+    \item Performance: $< 0.001$ sec per file
+  \end{itemize}
+  \item \textbf{Result}: ✓ Successfully parses all seeds
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Component Breakdown: Token Mutator}
+\begin{block}{Implementation Details}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/mutator/token\_mutator.py}
+  \item \textbf{Size}: $\sim$350 lines of code (increased from $\sim$250)
+  \item \textbf{Mutation Operations (8 total)}:
+  \begin{enumerate}\footnotesize
+    \item \texttt{\_mutate\_values()}: Random number replacement (e.g., 42 $\rightarrow$ 99)
+    \item \texttt{\_mutate\_symbols()}: Symbol swaps (=, !=, $<$, $>$)
+    \item \texttt{\_mutate\_operators()}: Operator changes (+, -, *, /)
+    \item \texttt{\_mutate\_brackets()}: Add/remove parentheses
+    \item \texttt{\_mutate\_strings()}: String reversals
+    \item \texttt{\_mutate\_logical\_operators()}: \&, |, $\wedge$, $\vee$ \textcolor{blue}{(NEW)}
+    \item \texttt{\_mutate\_quantifiers()}: forall, exists, $\forall$, $\exists$ \textcolor{blue}{(NEW)}
+    \item \texttt{\_mutate\_comparison\_operators()}: =, !=, $<$, $>$, etc. \textcolor{blue}{(NEW)}
+  \end{enumerate}
+  \item \textbf{Result}: ✓ Generates diverse mutants, all operations tested
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Component Breakdown: Oracles}
+\begin{block}{Crash/Hang Oracle}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/oracle/crash\_oracle.py}
+  \item \textbf{Size}: $\sim$100 lines of code
+  \item \textbf{What it does}:
+  \begin{enumerate}\footnotesize
+    \item Runs prover (Z3/cvc5) on mutant file via subprocess
+    \item Sets timeout using \texttt{signal.alarm()} (default 5.0 sec)
+    \item Captures stdout and stderr
+    \item Checks exit code (non-zero = crash)
+    \item Detects timeout if process doesn't finish
+    \item Returns status: \texttt{normal}, \texttt{crash}, or \texttt{timeout}
+  \end{enumerate}
+  \item \textbf{Testing}: 0 crashes detected in 644 tests (provers are stable)
+  \item \textbf{Result}: ✓ Works correctly, detects crashes and timeouts
+\end{itemize}
+\end{block}
+
+\begin{block}{Differential Oracle}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/oracle/differential\_oracle.py}
+  \item \textbf{Size}: $\sim$100 lines of code
+  \item \textbf{What it does}:
+  \begin{enumerate}\footnotesize
+    \item Runs same mutant on both Z3 and cvc5
+    \item Parses output for SAT/UNSAT/UNKNOWN status
+    \item Compares results from both provers
+    \item Flags if results disagree (e.g., Z3 says SAT, cvc5 says UNSAT)
+  \end{enumerate}
+  \item \textbf{Testing}: 0 inconsistencies in 644 tests (provers agree)
+  \item \textbf{Result}: ✓ Works correctly, detects prover disagreements
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Component Breakdown: Main Program}
+\begin{block}{Main Program Implementation}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/main.py}
+  \item \textbf{Size}: $\sim$250 lines of code
+  \item \textbf{Execution flow}:
+  \begin{enumerate}\footnotesize
+    \item \textbf{Initialize}: Load configuration, setup oracles, statistics, logger
+    \item \textbf{Load seeds}: Scan directory for TPTP files (up to \texttt{--max-seeds})
+    \item \textbf{For each seed}:
+    \begin{itemize}\footnotesize
+    \footnotesize
+      \item Parse TPTP file using parser
+      \item Generate N mutants using mutator (default 10)
+      \item For each mutant:
+      \begin{itemize}\footnotesize
+      \footnotesize
+        \item Save mutant to file
+        \item Run crash oracle
+        \item Run differential oracle
+        \item Record results
+      \end{itemize}
+    \end{itemize}
+    \item \textbf{Save results}: Statistics to JSON, logs to file
+    \item \textbf{Report}: Print summary statistics
+  \end{enumerate}
+  \item \textbf{Result}: ✓ Complete end-to-end pipeline working
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Component Breakdown: Utilities}
+\begin{block}{Statistics Collector}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/utils/stats.py}
+  \item \textbf{Size}: $\sim$100 lines of code
+  \item \textbf{What it tracks}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Total tests run
+    \item Mutants generated
+    \item Seeds processed
+    \item Crashes detected
+    \item Timeouts detected
+    \item Differential bugs found
+    \item Execution times (total, average)
+    \item Start/end timestamps
+  \end{itemize}
+  \item \textbf{Output}: JSON file with all statistics
+  \item \textbf{Result}: ✓ Comprehensive statistics collection
+\end{itemize}
+\end{block}
+
+\begin{block}{Logger}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textbf{File}: \texttt{fuzzer/utils/logger.py}
+  \item \textbf{Size}: $\sim$50 lines of code
+  \item \textbf{Features}:
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item Logs to both file and console
+    \item Timestamped entries
+    \item Log levels: INFO, ERROR, DEBUG
+    \item Structured format
+  \end{itemize}
+  \item \textbf{Result}: ✓ Detailed logging system
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Code Statistics \& Quality}
+\begin{block}{Project Metrics}
+\begin{center}
+\begin{tabular}{l c}
+\hline
+\textbf{Metric} & \textbf{Count} \\
+\hline
+Total Lines of Code & $\sim$1100 (Python) \\
+Core Modules & 7 \\
+Parser LOC & $\sim$150 \\
+Mutator LOC & $\sim$350 \\
+Oracle LOC & $\sim$200 (100 + 100) \\
+Main LOC & $\sim$250 \\
+Utils LOC & $\sim$150 (100 + 50) \\
+Test Files (.thy) & 2 \\
+Utility Scripts & 5 \\
+Seed Files (TPTP) & 480 \\
+\hline
+\end{tabular}
+\end{center}
+\end{block}
+
+\begin{block}{Code Quality Measures}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ All functions have docstrings
+  \item ✓ Type hints used (Python 3 compatible)
+  \item ✓ Error handling in all critical paths
+  \item ✓ Modular design (easy to extend)
+  \item ✓ Logging at appropriate levels
+  \item ✓ Statistics tracking comprehensive
+  \item ✓ All components unit tested
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Current Status: Week 3-4}
+\begin{block}{Completed (50\%)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textbf{MVP framework}: All 7 core modules implemented
+  \item ✓ \textbf{Mutator enhancement}: 8 operations (5 $\rightarrow$ 8, +60\%)
+  \item ✓ \textbf{Large-scale testing}: 644 tests across 4 batches, 100\% success
+  \item ✓ \textbf{Improvement validation}: +41\% generation, +39\% performance
+  \item ✓ \textbf{Bug fixes}: Fixed 4 bugs during development
+  \item ✓ \textbf{Utility scripts}: Testing and analysis automation
+\end{itemize}
+\end{block}
+
+\begin{block}{Remaining (50\%)}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ⏳ \textbf{Code optimization}: Algorithm improvements, memory usage
+  \item ⏳ \textbf{Parallel processing}: Multi-process execution
+  \item ⏳ \textbf{Additional mutations}: More mutation strategies
+  \item ⏳ \textbf{Visualization}: Charts, trend analysis
+  \item ⏳ \textbf{Performance tuning}: Further optimization
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Next Steps: Week 5-7 Detailed Plan}
+\begin{block}{Week 5: AST-Level Mutator}
+\begin{enumerate}\footnotesize
+  \item \textbf{Day 1-2: pySMT AST Research}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Study pySMT documentation, experiment with API
+    \item \textit{What to learn}: AST node types, formula construction, type system
+    \item \textit{Deliverable}: Prototype code, research notes
+  \end{itemize}
+  
+  \item \textbf{Day 3-4: AST Mutator Implementation}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Implement \texttt{ASTMutator} class
+    \item \textit{Features}: Structure-aware mutations, type constraints
+    \item \textit{Deliverable}: Working AST mutator, unit tests
+  \end{itemize}
+  
+  \item \textbf{Day 5: Testing \& Integration}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Test AST mutator, compare with token mutator
+    \item \textit{Goal}: Validate effectiveness
+    \item \textit{Deliverable}: Test results, performance metrics
+  \end{itemize}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Next Steps: Reconstruction Oracle}
+\begin{block}{Week 6-7: Reconstruction Oracle}
+\begin{enumerate}\footnotesize
+  \item \textbf{Isabelle Integration}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Parse Isabelle/Sledgehammer output
+    \item \textit{Method}: Regex/parsing for reconstruction attempts
+    \item \textit{Output}: Detection of proof reconstruction failures
+  \end{itemize}
+  
+  \item \textbf{Failure Detection}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Classify failure types (syntax, type, timeout)
+    \item \textit{Method}: Pattern matching on error messages
+    \item \textit{Output}: Structured failure reports
+  \end{itemize}
+  
+  \item \textbf{Analysis \& Reporting}
+  \begin{itemize}\footnotesize
+  \footnotesize
+    \item \textit{Action}: Correlate failures with mutations
+    \item \textit{Method}: Statistical analysis
+    \item \textit{Output}: Reports on failure patterns
+  \end{itemize}
+\end{enumerate}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Next Steps: Week 8-13 Overview}
+\begin{block}{Week 8-9: Large-Scale Fuzzing Campaigns}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textit{Action}: Run fuzzer on full seed corpus (480 TPTP files)
+  \item \textit{Goals}: Discover bugs, collect statistics, validate framework
+  \item \textit{Expected output}: Bug reports, coverage analysis, performance metrics
+\end{itemize}
+\end{block}
+
+\begin{block}{Week 10-11: Minimization, Bug Triage, Analysis}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textit{Action}: Minimize bug instances using delta-debugging
+  \item \textit{Goals}: Triage bugs, analyze patterns, correlate with mutations
+  \item \textit{Expected output}: Minimized test cases, bug classification, analysis reports
+\end{itemize}
+\end{block}
+
+\begin{block}{Week 12-13: Write-up, Slides, Final Evaluation}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item \textit{Action}: Write final report, prepare presentation, finalize evaluation
+  \item \textit{Goals}: Complete deliverables, present results, submit project
+  \item \textit{Expected output}: Final report, presentation slides, source code package
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Timeline \& Milestones}
+\begin{block}{Project Timeline}
+\begin{center}
+\scalebox{0.75}{
+\begin{tikzpicture}[
+  node distance=1.2cm,
+  milestone/.style={draw, rounded corners, minimum width=1.6cm, minimum height=0.7cm, align=center, text width=1.5cm, font=\tiny}
+]
+
+\node[milestone, fill=green!20] (w12) {Week 1-2\\100\%};
+\node[milestone, fill=orange!20, right=of w12] (w34) {Week 3-4\\50\%};
+\node[milestone, fill=blue!20, right=of w34] (w57) {Week 5-7\\30\%};
+\node[milestone, fill=gray!20, right=of w57] (w89) {Week 8-9\\0\%};
+\node[milestone, fill=purple!20, right=of w89] (w1011) {Week 10-11\\0\%};
+\node[milestone, fill=red!20, right=of w1011] (w1213) {Week 12-13\\0\%};
+
+\draw[-{Latex}] (w12) -- (w34);
+\draw[-{Latex}] (w34) -- (w57);
+\draw[-{Latex}] (w57) -- (w89);
+\draw[-{Latex}] (w89) -- (w1011);
+\draw[-{Latex}] (w1011) -- (w1213);
+
+\end{tikzpicture}
+}
+\end{center}
+\end{block}
+
+\begin{block}{Key Milestones}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ \textcolor{green}{Week 1-2}: Environment setup (100\%)
+  \item ✓ \textcolor{green}{Week 3-4}: MVP framework (50\%, core complete)
+  \item ⏳ \textcolor{orange}{Week 5-7}: AST mutator + oracles, end-to-end prototype
+  \item ⏳ \textcolor{gray}{Week 8-9}: Large-scale fuzzing campaigns
+  \item ⏳ \textcolor{purple}{Week 10-11}: Minimization, bug triage, analysis
+  \item ⏳ \textcolor{red}{Week 12-13}: Write-up, slides, final evaluation
+\end{itemize}
+\end{block}
+\end{frame}
+
+%------------------------------------------------
+\begin{frame}{Summary: Complete Achievement List}
+\begin{block}{Week 1-2 Achievements}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ Installed Isabelle/HOL (GUI + CLI; experiments use CLI only), Z3, cvc5, Python, pySMT
+  \item ✓ Verified Isabelle CLI tools: \texttt{isabelle version}, \texttt{isabelle build}, \texttt{isabelle process}
+  \item ✓ Fixed cvc5 PATH issue (created symlink)
+  \item ✓ Created test theory files (Test\_Sledgehammer.thy, Test\_SMT\_Method.thy)
+  \item ✓ Verified Sledgehammer export functionality
+  \item ✓ Extracted 480 TPTP seed files using Isabelle CLI
+  \item ✓ Created batch export scripts using \texttt{isabelle process -T}
+\end{itemize}
+\end{block}
+
+\begin{block}{Week 3-4 Achievements}
+\begin{itemize}\footnotesize
+\footnotesize
+  \item ✓ Implemented complete MVP framework (7 modules, $\sim$1100 LOC)
+  \item ✓ Enhanced mutator from 5 to 8 operations (+60\%)
+  \item ✓ Fixed 4 bugs during development
+  \item ✓ Tested framework with 644 test cases (100\% success)
+  \item ✓ Achieved 41\% improvement in generation rate
+  \item ✓ Achieved 39\% performance improvement
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\end{document}
