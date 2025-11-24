@@ -420,6 +420,100 @@ z3 --version
 
 ## Usage Examples
 
+### Run Differential Testing (Prover Bug Discovery)
+
+**Step 1: Download TPTP Problems**
+
+TPTP (Thousands of Problems for Theorem Provers) is the standard benchmark suite. To reproduce the 519 prover bugs, you need to download the TPTP library.
+
+**Option 1: Download from Official TPTP Website (Recommended)**
+
+```bash
+# 1. Visit the TPTP distribution page
+# URL: https://www.tptp.org/TPTP/Distribution/
+
+# 2. Download the latest version (recommended: TPTP v7.5.0 or later)
+# Direct download link: https://www.tptp.org/TPTP/Distribution/TPTP-v7.5.0.tgz
+# Or use wget/curl:
+cd ~/Downloads  # or any directory you prefer
+wget https://www.tptp.org/TPTP/Distribution/TPTP-v7.5.0.tgz
+
+# 3. Extract the archive
+tar -xzf TPTP-v7.5.0.tgz
+
+# 4. Move to a convenient location (optional)
+mv TPTP-v7.5.0 ~/tptp/
+
+# 5. Verify the download
+ls ~/tptp/TPTP-v7.5.0/Problems/
+# You should see directories like: Axioms/, Problems/, etc.
+# The Problems/ directory contains the actual problem files (.p files)
+```
+
+**Option 2: Use a Subset for Quick Testing**
+
+If you only want to test the differential oracle functionality without downloading the full library:
+
+```bash
+# Download a small subset (50-100 problems) for testing
+# You can manually download individual problems from:
+# https://www.tptp.org/cgi-bin/SeeTPTP?Category=Problems&Domain=FOF
+
+# Or use TPTP's problem browser:
+# https://www.tptp.org/cgi-bin/SeeTPTP?Category=Problems
+
+# Focus on FOF (First-Order Form) problems for ATP provers
+# Save them to a directory, e.g., ~/tptp_sample/
+```
+
+**Option 3: Use Isabelle's TPTP Integration (If Available)**
+
+Some TPTP problems may be available through Isabelle's examples or distribution, but this is not guaranteed.
+
+**Note**: The full TPTP library is several GB in size. For reproducing the 519 bugs reported in the paper, you need the complete library with 1000+ problems. The Problems/ directory typically contains thousands of .p files organized by domain.
+
+**Step 2: Run Differential Testing**
+
+```bash
+# Create a script to run differential testing
+# Example usage of differential_oracle.py:
+
+python3 -c "
+from code.differential_oracle import DifferentialOracle
+from code.crash_oracle import CrashOracle, ProverResult, OracleResult
+import subprocess
+import os
+
+# Example: Test a single TPTP problem
+tptp_file = 'path/to/problem.p'
+
+oracle = DifferentialOracle()
+crash_oracle = CrashOracle()
+
+# Run each prover
+results = {}
+for prover in ['eprover', 'cvc5', 'z3']:
+    # Run prover (implementation depends on your setup)
+    # This is a simplified example
+    result = crash_oracle.test_prover(prover, tptp_file, timeout=30)
+    results[prover] = result
+
+# Check for differential bugs
+diff_result = oracle.check(results)
+if diff_result.is_differential:
+    print(f'Bug detected: {diff_result.error_message}')
+"
+
+# For full-scale testing (1000+ problems), you would:
+# 1. Iterate through all TPTP problems
+# 2. Run each problem with all three provers
+# 3. Compare results using DifferentialOracle
+# 4. Collect bug reports
+# Expected: 519 bugs across E Prover (349), cvc5 (143), Z3 (27)
+```
+
+**Note**: A complete differential testing script is not included in this repository due to the large size of TPTP library (several GB). Researchers should download TPTP problems separately and implement the testing loop based on the provided `differential_oracle.py` module.
+
 ### Run Quick Fuzzing Campaign (5 minutes)
 ```bash
 python3 code/fuzzing_campaign.py \
@@ -457,6 +551,30 @@ pytest tests/ -v --cov=code --cov-report=html
 ```
 
 ## Expected Results
+
+### Running Differential Testing (1000+ TPTP Problems)
+```
+total_tptp_problems: 1000+
+provers_tested: E Prover, cvc5, Z3
+timeout_per_test: 30 seconds
+
+Expected bug distribution:
+- Total bugs: 519
+  - E Prover: 349 bugs (67.2%)
+  - cvc5: 143 bugs (27.6%)
+  - Z3: 27 bugs (5.2%)
+
+Bug types:
+- Timeouts: 288 (55.5%)
+- Errors: 115 (22.2%)
+- Slowdowns: 116 (22.3%)
+
+Note: Actual numbers may vary slightly depending on:
+- TPTP problem selection
+- Prover versions
+- Hardware configuration
+- Timeout settings
+```
 
 ### Running Quick Test
 ```
@@ -522,17 +640,31 @@ The implementation includes comprehensive type annotations, extensive inline doc
 
 For researchers wanting to reproduce this work:
 
+### Phase 1: Prover Differential Testing
 - [ ] Install Python 3.13+
-- [ ] Install Isabelle 2025
 - [ ] Install E Prover, cvc5, Z3
+- [ ] Download TPTP library (1000+ problems) from https://www.tptp.org/
 - [ ] Clone/download this repository
 - [ ] Run `pip install -r requirements.txt`
+- [ ] Implement differential testing loop using `code/differential_oracle.py`
+- [ ] Run differential testing on TPTP problems
+- [ ] Verify bug discovery (expected: ~519 bugs across all provers)
+- [ ] Compare bug distribution with reported statistics
+
+### Phase 2: Integration Fuzzing
+- [ ] Install Isabelle 2025
 - [ ] Run `pytest tests/ -v` (verify installation)
 - [ ] Run `python3 code/fuzzing_campaign.py --campaign-name test ...`
 - [ ] Verify 0 integration bugs found
 - [ ] Run `python3 code/two_phase_verification.py ...`
 - [ ] Verify 100% Mirabelle alignment
 - [ ] Compare results with this README
+
+### Phase 3: Sledgehammer Timeout Cases
+- [ ] Navigate to `data/test_theories/`
+- [ ] Run `isabelle mirabelle -T 30 Extreme_Cases.thy`
+- [ ] Verify 3 timeout cases (even_or_odd, fib_positive, complex nested operations)
+- [ ] Compare with reported timeout cases
 
 ## Code Documentation
 
