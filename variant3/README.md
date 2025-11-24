@@ -37,6 +37,8 @@ This repository contains a complete implementation of an AST-based fuzzing frame
 
 - **0 integration bugs** found in 130 mutation tests (confirmed by Mirabelle)
 
+- **3 Sledgehammer timeout cases** identified as capability boundaries (mutual recursion, custom induction, complex nested operations)
+
 - **0% false positive rate** achieved through two-phase verification (Oracle + Mirabelle)
 
 - **100% Mirabelle alignment** for validation
@@ -492,6 +494,20 @@ test_isabelle_interface.py::... PASSED [100%]
 - **Integration Fuzzing**: 0 bugs found in 130 mutations
   - Confirms Sledgehammer interface stability
   - 100% alignment with Mirabelle validation
+
+- **Sledgehammer Capability Boundaries**: 3 timeout cases identified
+  - Mutual recursion patterns (even_or_odd lemma in Extreme_Cases.thy, line 24)
+  - Custom induction rules (fib_positive lemma in Extreme_Cases.thy, line 55)
+  - Complex nested set operations
+  - These represent Sledgehammer's practical limitations, not integration bugs
+  - Provide guidance for when to use native Isabelle tactics instead
+  
+  To reproduce these timeout cases:
+  ```bash
+  cd data/test_theories
+  isabelle mirabelle -T 30 Extreme_Cases.thy
+  # Expected: 3 timeouts on even_or_odd, fib_positive, and complex nested operations
+  ```
 
 ### Performance Metrics
 - **Oracle Throughput**: 30 tests/minute
