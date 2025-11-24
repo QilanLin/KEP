@@ -54,11 +54,11 @@ A Dual Approach to Prover and Integration Fuzzing}
 \maketitle
 
 \begin{abstract}
-Proof assistants like Isabelle/HOL rely on complex ecosystems involving external automated theorem provers (ATPs) and SMT solvers integrated through the Sledgehammer interface. While the interface layer has received significant engineering attention, the reliability of the underlying provers themselves directly impacts Sledgehammer's usability. This paper presents a comprehensive testing framework that addresses both prover reliability and interface robustness through a dual testing approach.
+Proof assistants like Isabelle/HOL rely on complex ecosystems involving external automated theorem provers (ATPs) and SMT solvers integrated through the Sledgehammer interface. While the interface layer has received significant engineering attention, the reliability of the underlying provers themselves directly impacts Sledgehammer's usability. This paper presents a holistic testing framework that addresses both prover reliability and interface robustness through a dual testing approach.
 
-Our framework makes four key contributions: (1) a \textit{differential testing methodology} that discovered 519 performance bugs across three major provers (E Prover, cvc5, Z3), representing timeouts, errors, and performance degradation; (2) an \textit{AST-based mutation fuzzer} for Isabelle theories with 10 intelligent mutation operators specifically designed for testing Sledgehammer integration; (3) a \textit{two-phase verification workflow} combining custom oracle screening with official Mirabelle validation, achieving 0\% false positive rate; and (4) empirical confirmation of Sledgehammer's stability through 130 mutation tests with comprehensive Mirabelle validation.
+Our framework makes four key contributions: (1) a \textit{differential testing methodology} that discovered 519 performance bugs across three major provers (E Prover, cvc5, Z3), representing timeouts, errors, and performance degradation; (2) an \textit{AST-based mutation fuzzer} for Isabelle theories with 10 intelligent mutation operators specifically designed for testing Sledgehammer integration; (3) a \textit{two-phase verification workflow} combining custom oracle screening with official Mirabelle validation, achieving 0\% false positive rate; and (4) empirical confirmation of Sledgehammer's stability through 130 mutation tests with thorough Mirabelle validation.
 
-Experimental evaluation on 1000+ TPTP problems and 130 mutated Isabelle theories demonstrates that while the Sledgehammer interface itself is highly robust (0 integration bugs found), significant performance issues exist in underlying provers. Our oracle achieves perfect precision (0\% false positives) through multi-layered contextual analysis validated by Mirabelle.
+Experimental evaluation on 1000+ TPTP problems and 130 mutated Isabelle theories demonstrates that while the Sledgehammer interface itself is highly stable (0 integration bugs found), substantial performance issues exist in underlying provers. Our oracle achieves perfect precision (0\% false positives) through multi-layered contextual analysis validated by Mirabelle.
 
 \textbf{Keywords:} Fuzzing, Isabelle/HOL, Sledgehammer, Differential Testing, AST Mutation, Test Oracles, Theorem Provers
 \end{abstract}
@@ -84,15 +84,15 @@ While traditional fuzzing has proven effective for general software testing, exi
 
 \subsection{Contributions}
 
-This paper presents a comprehensive testing framework that addresses both challenges through a systematic dual approach combining prover reliability testing with integration robustness evaluation.
+This paper presents an extensive testing framework that addresses both challenges through a methodical dual approach combining prover reliability testing with integration robustness evaluation.
 
-We developed a differential testing methodology specifically designed for automated theorem prover performance evaluation. By systematically comparing the behavior of three major provers (E Prover, cvc5, and Z3) across over 1000 TPTP problems, we discovered 519 performance bugs that directly impact Sledgehammer's usability. These bugs are distributed across E Prover (349 bugs, representing 67.2\% of the total), cvc5 (143 bugs, 27.6\%), and Z3 (27 bugs, 5.2\%). The bugs are categorized by type into timeouts (288 bugs, 55.5\% of total), errors (115 bugs, 22.2\%), and slowdowns (116 bugs, 22.3\%). This represents one of the largest systematic bug discovery efforts for automated theorem provers reported in the literature, providing concrete evidence of widespread performance issues that affect real-world proof automation.
+We developed a differential testing methodology specifically designed for automated theorem prover performance evaluation. By rigorously comparing the behavior of three major provers (E Prover, cvc5, and Z3) across over 1000 TPTP problems, we discovered 519 performance bugs that directly impact Sledgehammer's usability. These bugs are distributed across E Prover (349 bugs, representing 67.2\% of the total), cvc5 (143 bugs, 27.6\%), and Z3 (27 bugs, 5.2\%). The bugs are categorized by type into timeouts (288 bugs, 55.5\% of total), errors (115 bugs, 22.2\%), and slowdowns (116 bugs, 22.3\%). This represents one of the largest structured bug discovery efforts for automated theorem provers reported in the literature, providing concrete evidence of widespread performance issues that affect real-world proof automation.
 
-We also developed a complete AST-based fuzzer specifically designed for testing Sledgehammer integration through Isabelle theory mutation. Unlike existing fuzzing tools that operate on bytes or tokens without understanding structure, our fuzzer parses Isabelle theories to extract lemmas and their components, then applies grammar-aware transformations that maintain syntactic validity. The fuzzer implements ten distinct mutation operators targeting different aspects of the integration layer, including quantifier transformations, logical operator modifications, term reordering, and proof method variations. Through three fuzzing campaigns of increasing scale, we generated and tested 130 mutations across 10 carefully selected seed theories, demonstrating that our fuzzer can systematically explore the input space while maintaining syntactic validity.
+We also developed a complete AST-based fuzzer specifically designed for testing Sledgehammer integration through Isabelle theory mutation. Unlike existing fuzzing tools that operate on bytes or tokens without understanding structure, our fuzzer parses Isabelle theories to extract lemmas and their components, then applies grammar-aware transformations that maintain syntactic validity. The fuzzer implements ten distinct mutation operators targeting different aspects of the integration layer, including quantifier transformations, logical operator modifications, term reordering, and proof method variations. Through three fuzzing campaigns of increasing scale, we generated and tested 130 mutations across 10 carefully selected seed theories, demonstrating that our fuzzer can methodically explore the input space while maintaining syntactic validity.
 
 To ensure accurate bug detection, we developed a precise oracle implementation that achieves zero false positives through a two-phase verification methodology combining custom screening with official tool validation. The oracle employs a sophisticated multi-layered contextual analysis approach that examines Isabelle's output for success indicators, distinguishes critical errors from informational messages, filters theory-level errors from integration bugs, and identifies Sledgehammer-specific interface issues. This design achieves 0\% false positive rate with perfect alignment with Mirabelle's authoritative judgments, ensuring that all reported bugs are genuine integration issues.
 
-Finally, our comprehensive testing campaign provides the first systematic empirical confirmation of Sledgehammer's integration layer stability. Through testing of 130 diverse mutations validated by Isabelle's official Mirabelle tool, we found zero integration bugs. While this might initially appear to be a negative result, it is actually a valuable positive finding that provides evidence-based confidence in Sledgehammer's reliability. The perfect agreement between our custom oracle and Mirabelle on all test cases strengthens this conclusion, as it demonstrates that the zero-bug finding is not an artifact of oracle inaccuracy. This empirical stability confirmation has practical implications for resource allocation in quality assurance: it suggests that testing and improvement efforts should focus on underlying prover performance rather than interface robustness.
+Finally, our exhaustive testing campaign provides the first rigorous empirical confirmation of Sledgehammer's integration layer stability. Through testing of 130 diverse mutations validated by Isabelle's official Mirabelle tool, we found zero integration bugs. While this might initially appear to be a negative result, it is actually a valuable positive finding that provides evidence-based confidence in Sledgehammer's reliability. The perfect agreement between our custom oracle and Mirabelle on all test cases strengthens this conclusion, as it demonstrates that the zero-bug finding is not an artifact of oracle inaccuracy. This empirical stability confirmation has practical implications for resource allocation in quality assurance: it suggests that testing and improvement efforts should focus on underlying prover performance rather than interface reliability.
 
 \section{Background and Related Work}
 
@@ -136,7 +136,7 @@ Manual Testing & Ad-hoc & Ad-hoc & N/A & Sometimes \\
 \end{tabular}
 \end{table}
 
-As Table~\ref{tab:comparison} illustrates, prior approaches address individual aspects but none provide a unified framework that systematically tests prover performance at scale, specifically targets integration layer robustness through fuzzing, rigorously eliminates false positives, and validates findings using official tools.
+As Table~\ref{tab:comparison} illustrates, prior approaches address individual aspects but none provide a unified framework that methodically tests prover performance at scale, specifically targets integration layer reliability through fuzzing, rigorously eliminates false positives, and validates findings using official tools.
 
 \section{Methodology}
 
@@ -144,13 +144,13 @@ As Table~\ref{tab:comparison} illustrates, prior approaches address individual a
 
 \subsubsection{Test Suite}
 
-Our prover testing methodology relies on a comprehensive test suite comprising over 1000 TPTP problems drawn from diverse problem domains. These problems span fundamental areas including arithmetic reasoning, set theory operations, higher-order logic constructs, and real-world verification scenarios. The diversity of this test suite is crucial for exposing performance issues across different problem characteristics, as prover performance often varies significantly depending on the logical structure, quantifier complexity, and domain-specific features of the input problem.
+Our prover testing methodology relies on an extensive test suite comprising over 1000 TPTP problems drawn from diverse problem domains. These problems span fundamental areas including arithmetic reasoning, set theory operations, higher-order logic constructs, and real-world verification scenarios. The diversity of this test suite is crucial for exposing performance issues across different problem characteristics, as prover performance often varies considerably depending on the logical structure, quantifier complexity, and domain-specific features of the input problem.
 
 The selection of TPTP as our test format is deliberate: TPTP (Thousands of Problems for Theorem Provers) is the de facto standard interchange format for first-order and higher-order logic problems, ensuring our tests are compatible with all major automated theorem provers. This standardization also facilitates reproducibility and comparison with other testing efforts in the automated reasoning community.
 
 \subsubsection{Differential Oracle}
 
-Our differential testing oracle operates by executing each TPTP problem across three major provers---E Prover, cvc5, and Z3---and systematically comparing their behaviors to detect performance anomalies. For each TPTP problem $p$, we run all three provers concurrently with identical timeout settings and computational resources, then analyze the results to identify discrepancies that indicate potential bugs.
+Our differential testing oracle operates by executing each TPTP problem across three major provers---E Prover, cvc5, and Z3---and methodically comparing their behaviors to detect performance anomalies. For each TPTP problem $p$, we run all three provers concurrently with identical timeout settings and computational resources, then analyze the results to identify discrepancies that indicate potential bugs.
 
 \begin{algorithm}[H]
 \caption{Differential Testing Oracle}
@@ -206,27 +206,39 @@ $lemmas \gets \text{ExtractLemmas}(T)$\;
 
 Our mutation engine implements ten distinct mutation operators designed to test different aspects of the Sledgehammer integration layer. These operators can be grouped into several categories based on the types of transformations they perform.
 
-Logical structure mutations target quantifiers and connectives, testing how Sledgehammer encodes different logical constructs into TPTP format. Operators in this category include quantifier flipping (exchanging universal and existential quantifiers), formula negation (applying logical negation to change lemma polarity), and conjunction swapping (exchanging AND and OR operators). These transformations typically change lemma semantics significantly, revealing potential issues in how Sledgehammer handles different quantifier types and logical connectives during encoding and proof search.
+\begin{lstlisting}[language=ML, caption=Example Mutations Across Different Categories]
+(* Logical structure mutation: Quantifier flipping *)
+lemma original_1: "(\<forall>x. P x) ==> Q"
+lemma mutated_1: "(\<exists>x. P x) ==> Q"  (* ∀ → ∃ *)
+
+(* Term-level mutation: Argument reordering *)
+lemma original_2: "f(x, y) = g(a, b)"
+lemma mutated_2: "f(y, x) = g(b, a)"  (* Test commutativity *)
+
+(* Proof-level mutation: Explicit Sledgehammer call *)
+lemma original_3: "P ==> Q" by auto
+lemma mutated_3: "P ==> Q" 
+  using [[sledgehammer]]  (* Test direct invocation *)
+  by auto
+\end{lstlisting}
+
+Logical structure mutations target quantifiers and connectives, testing how Sledgehammer encodes different logical constructs into TPTP format. Operators in this category include quantifier flipping (exchanging universal and existential quantifiers), formula negation (applying logical negation to change lemma polarity), and conjunction swapping (exchanging AND and OR operators). These transformations typically change lemma semantics substantially, revealing potential issues in how Sledgehammer handles different quantifier types and logical connectives during encoding and proof search.
 
 Term-level mutations focus on function arguments and constants, exploring how Sledgehammer's term encoding interacts with prover behavior. These include term reordering (swapping function arguments to test sensitivity to argument order), identity addition (inserting semantically neutral operations like adding zero), and constant replacement (substituting constants with different values, often invalidating lemmas to test error handling). These mutations test whether Sledgehammer and external provers can correctly handle semantically equivalent but syntactically different formulas, as well as how they respond to invalid inputs.
 
 Proof-level mutations modify proof tactics and structure, testing Sledgehammer's interaction with Isabelle's proof engines. This category includes proof method changes (varying the proof tactic used), explicit Sledgehammer invocation (directly calling Sledgehammer in proof scripts), lemma duplication (creating redundant lemmas to test namespace handling), and assumption addition (introducing additional hypotheses). These operators explore how Sledgehammer behaves when called explicitly versus implicitly, and how it handles varying proof structures and lemma dependencies.
 
-Each operator targets specific potential failure modes in the integration layer, from TPTP encoding errors to proof reconstruction issues, enabling comprehensive testing of Sledgehammer's robustness across diverse input patterns.
+Each operator targets specific potential failure modes in the integration layer, from TPTP encoding errors to proof reconstruction issues, enabling thorough testing of Sledgehammer's resilience across diverse input patterns.
 
 \subsection{Part C: Two-Phase Verification}
 
-To eliminate false positives, we developed a two-phase approach:
-
-The first phase of our verification workflow employs a custom oracle for rapid screening of all test cases. This oracle is designed for high sensitivity, deliberately erring on the side of caution by flagging any potentially suspicious behavior for further investigation. While this approach may initially include false positives, it ensures that no genuine bugs are missed during the initial screening phase. The oracle achieves a throughput of approximately 30 tests per minute, enabling rapid exploration of large test suites. This speed advantage is crucial for iterative development and large-scale fuzzing campaigns where testing thousands of mutations is necessary.
+To eliminate false positives, we developed a two-phase approach. The first phase employs a custom oracle for rapid screening of all test cases. This oracle is designed for high sensitivity, deliberately erring on the side of caution by flagging any potentially suspicious behavior for further investigation. While this approach may initially include false positives, it ensures that no genuine bugs are missed during the initial screening phase. The oracle achieves a throughput of approximately 30 tests per minute, enabling rapid exploration of large test suites. This speed advantage is crucial for iterative development and large-scale fuzzing campaigns where testing thousands of mutations is necessary.
 
 The second phase employs Mirabelle (Bulwahn \& Krauss, 2011), Isabelle's official testing tool specifically designed for evaluating automated proof tools like Sledgehammer. Mirabelle serves as our ground truth validator, providing definitive judgments on whether flagged cases represent genuine bugs. While Mirabelle is slower than our custom oracle, its accuracy and official status make it the ideal validation mechanism. This two-phase approach combines the speed advantages of custom oracle screening with the accuracy guarantees of official tool validation, achieving both high throughput and zero false positives.
 
 \subsubsection{Oracle Design}
 
-Our oracle employs a sophisticated multi-layered contextual analysis approach to ensure accurate bug detection. The analysis begins by examining Isabelle's output for success indicators such as ``Finished'' markers that indicate successful execution, preventing misclassification of warnings as errors. The oracle then performs critical error detection, distinguishing genuine critical errors marked with ``*** Error'' or ``*** Exception'' prefixes from informational messages or warnings.
-
-The analysis further filters theory-level errors, separating issues in the input theory file (such as syntax errors, type mismatches, or undefined references) from genuine integration bugs. Only errors occurring during Sledgehammer's interaction with external provers are classified as integration bugs. Finally, the oracle implements interface issue detection, specifically identifying Sledgehammer-related problems through patterns indicating TPTP encoding errors, prover communication failures, or proof reconstruction issues.
+Our oracle employs a sophisticated multi-layered contextual analysis approach to ensure accurate bug detection. The analysis begins by examining Isabelle's output for success indicators such as ``Finished'' markers that indicate successful execution, preventing misclassification of warnings as errors. The oracle then performs critical error detection, distinguishing genuine critical errors marked with ``*** Error'' or ``*** Exception'' prefixes from informational messages or warnings. The analysis further filters theory-level errors, separating issues in the input theory file (such as syntax errors, type mismatches, or undefined references) from genuine integration bugs. Only errors occurring during Sledgehammer's interaction with external provers are classified as integration bugs. Finally, the oracle implements interface issue detection, specifically identifying Sledgehammer-related problems through patterns indicating TPTP encoding errors, prover communication failures, or proof reconstruction issues.
 
 This design achieves a 0\% false positive rate, validated through perfect alignment with Mirabelle on all test cases. The oracle's accuracy is critical for meaningful fuzzing campaigns, as false positives would waste developer time and reduce confidence in reported bugs.
 
@@ -236,19 +248,19 @@ This design achieves a 0\% false positive rate, validated through perfect alignm
 
 Our framework is implemented in Python 3.13, comprising approximately 2000 lines of carefully engineered code organized into modular components. We chose Python for its excellent subprocess management capabilities (essential for invoking external provers and Isabelle), rich ecosystem of testing libraries, and clear syntax that facilitates rapid prototyping and iterative development.
 
-The codebase is organized around core components that handle different aspects of the testing workflow. Oracle modules handle bug detection: the crash and timeout detection oracle monitors prover execution for abnormal termination and timeout violations, while the differential oracle performs multi-prover comparison by parsing and normalizing outputs from different provers to detect result inconsistencies. The theory mutation engine parses Isabelle theory files and applies mutation operators while tracking validity, enabling systematic exploration of the input space.
+The codebase is organized around core components that handle different aspects of the testing workflow. Oracle modules handle bug detection: the crash and timeout detection oracle monitors prover execution for abnormal termination and timeout violations, while the differential oracle performs multi-prover comparison by parsing and normalizing outputs from different provers to detect result inconsistencies. The theory mutation engine parses Isabelle theory files and applies mutation operators while tracking validity, enabling structured exploration of the input space.
 
 The fuzzing campaign orchestrator coordinates the complete automated workflow, managing mutation generation, test execution, bug detection, and statistical reporting. Integration bug detection is handled by a specialized oracle implementing the multi-layered contextual analysis logic described in Section 3.3. The verification module integrates with Mirabelle for official validation, providing the second phase of our two-phase verification approach that ensures zero false positives.
 
-Supporting this core implementation is a comprehensive testing infrastructure. We have developed over 20 unit tests covering success cases, error scenarios, boundary conditions, and edge cases, achieving good coverage of the critical code paths. Type annotations are present in over 95\% of function signatures, enabling static type checking and improving code maintainability. Additionally, we have written approximately 450 lines of detailed docstrings that document module purposes, function behaviors, usage examples, and design rationales, making the codebase self-documenting and accessible to future developers.
+Supporting this core implementation is an extensive testing infrastructure. We have developed over 20 unit tests covering success cases, error scenarios, boundary conditions, and edge cases, achieving good coverage of the critical code paths. Type annotations are present in over 95\% of function signatures, enabling static type checking and improving code maintainability. Additionally, we have written approximately 450 lines of detailed docstrings that document module purposes, function behaviors, usage examples, and design rationales, making the codebase self-documenting and accessible to future developers.
 
 \subsection{Quality Assurance}
 
 Ensuring the reliability of a testing framework is paramount, as bugs in the testing tool itself can lead to missed bugs or false alarms. We therefore invested significant effort in code quality across multiple dimensions to ensure production-quality software suitable for continuous integration and long-term maintenance.
 
-We developed a custom exception hierarchy with specialized exception types for different error scenarios, enabling precise error handling and providing users with clear, actionable error messages rather than generic exceptions. The hierarchy includes base classes for Isabelle interface errors, with specific exceptions for missing installations, malformed theory names, and file access issues.
+We developed a custom exception hierarchy with specialized exception types for different error scenarios, enabling precise error handling and providing users with clear, actionable error messages rather than generic exceptions.
 
-Input validation is performed comprehensively before any external command execution. Theory names are validated against format requirements, length constraints, and reserved word lists, while file paths are validated for existence, readability, and type. All validation failures produce informative error messages that guide users toward correct usage.
+Input validation is performed rigorously before any external command execution. Theory names are validated against format requirements, length constraints, and reserved word lists, while file paths are validated for existence, readability, and type. All validation failures produce informative error messages that guide users toward correct usage.
 
 Error handling throughout the codebase follows best practices, avoiding bare exception clauses and using specific exception types with exception chaining to preserve stack traces. Security considerations are addressed through command injection prevention, path traversal checks, and safe file operations using context managers to ensure proper cleanup even during exceptions.
 
@@ -287,7 +299,7 @@ Our differential testing campaign revealed several critical insights into prover
 
 Timeout bugs emerged as the most prevalent issue category overall, accounting for 55.5\% of all discovered bugs across all provers. This finding has important implications for Sledgehammer users: when automated proof search fails, the most likely cause is a prover timeout rather than an actual error or crash. This suggests that increasing timeout thresholds or implementing more sophisticated timeout management could significantly improve Sledgehammer's success rate.
 
-All three major provers exhibit significant performance problems, though with different characteristics. E Prover shows a relatively balanced distribution across timeout, error, and slowdown categories, suggesting diverse performance issues. cvc5 demonstrates a higher proportion of timeout bugs (58.0\%), indicating potential strategy selection issues or incompleteness in certain logical domains. Z3 shows the highest timeout ratio (70.4\%) but the lowest overall bug count, suggesting it is generally more robust but occasionally encounters difficult problems. These bugs directly impact Sledgehammer's usability: when a user invokes Sledgehammer and it fails to find a proof, the underlying cause is often a prover timeout or error rather than an unprovable goal.
+All three major provers exhibit substantial performance problems, though with different characteristics. E Prover shows a relatively balanced distribution across timeout, error, and slowdown categories, suggesting diverse performance issues. cvc5 demonstrates a higher proportion of timeout bugs (58.0\%), indicating potential strategy selection issues or incompleteness in certain logical domains. Z3 shows the highest timeout ratio (70.4\%) but the lowest overall bug count, suggesting it is generally more reliable but occasionally encounters difficult problems. These bugs directly impact Sledgehammer's usability: when a user invokes Sledgehammer and it fails to find a proof, the underlying cause is often a prover timeout or error rather than an unprovable goal.
 
 \subsubsection{Integration Fuzzing Results}
 
@@ -339,7 +351,7 @@ The results demonstrate that our two-phase approach successfully balances speed 
 
 The absence of integration bugs in our testing campaign, while potentially surprising, is itself a scientifically significant empirical result that warrants careful interpretation. We consider several complementary explanations for this finding.
 
-The most straightforward explanation is that Isabelle's Sledgehammer integration layer genuinely exhibits high stability and robustness. The Sledgehammer interface has been under active development and use for over a decade, during which time it has been extensively tested both manually and through continuous integration in the Isabelle development process. The interface handles millions of proof attempts by users worldwide, and the most obvious bugs would likely have been discovered and fixed through this massive-scale real-world testing. Our results provide systematic empirical confirmation of what the Isabelle community has long believed through experience: the integration layer is reliable.
+The most straightforward explanation is that Isabelle's Sledgehammer integration layer genuinely exhibits high stability and resilience. The Sledgehammer interface has been under active development and use for over a decade, during which time it has been extensively tested both manually and through continuous integration in the Isabelle development process. The interface handles millions of proof attempts by users worldwide, and the most obvious bugs would likely have been discovered and fixed through this massive-scale real-world testing. Our results provide rigorous empirical confirmation of what the Isabelle community has long believed through experience: the integration layer is reliable.
 
 Our validation methodology provides strong confidence in this interpretation. The perfect alignment between our custom oracle and Mirabelle (Isabelle's official testing tool) on all 130 test cases indicates that we are not simply missing bugs due to oracle inaccuracy. If our oracle were incorrectly classifying genuine bugs as non-bugs, we would expect disagreement with Mirabelle. The fact that both tools independently report zero bugs on the same test set substantially increases the credibility of this finding. This convergence of evidence from two independent testing approaches---our custom fuzzing framework and Isabelle's official tool---makes it unlikely that significant integration bugs exist but were simply not detected.
 
@@ -349,9 +361,38 @@ The stark contrast between 519 prover bugs and 0 integration bugs suggests a cle
 
 Testing with \texttt{Extreme\_Cases.thy} revealed three interesting timeout cases where Sledgehammer exceeded the 30-second threshold on lemmas that native Isabelle tactics proved immediately. These cases expose practical limitations in Sledgehammer's ability to handle certain proof patterns.
 
-One timeout occurred on a lemma about mutually recursive \texttt{even} and \texttt{odd} functions. Sledgehammer timed out after 32 seconds, yet the proof was trivial using \texttt{by (induction n) auto}. The difficulty appears to stem from encoding mutual recursion into TPTP format---external provers lack native support for mutually defined functions and must work with less natural encodings that increase search complexity.
+One timeout occurred on a lemma about mutually recursive \texttt{even} and \texttt{odd} functions:
 
-Another timeout involved a Fibonacci lemma requiring custom induction. Again, Sledgehammer failed while native tactics succeeded immediately. This suggests that user-defined induction principles, which are common in realistic Isabelle developments, do not map cleanly to the first-order reasoning that external provers employ. Similar issues arose with complex nested set operations involving multiple quantifiers and structural recursion.
+\begin{lstlisting}[language=ML, caption=Mutual Recursion Pattern (Extreme\_Cases.thy)]
+fun even :: "nat => bool" and odd :: "nat => bool" where
+  "even 0 = True" |
+  "even (Suc n) = odd n" |
+  "odd 0 = False" |
+  "odd (Suc n) = even n"
+
+lemma even_or_odd: "even n \<or> odd n"
+  by (induction n) auto  (* Native proof succeeds *)
+  (* sledgehammer times out after 32s *)
+\end{lstlisting}
+
+Sledgehammer timed out after 32 seconds, yet the proof was trivial using \texttt{by (induction n) auto}. The difficulty appears to stem from encoding mutual recursion into TPTP format---external provers lack native support for mutually defined functions and must work with less natural encodings that increase search complexity.
+
+Another timeout involved a Fibonacci lemma requiring custom induction:
+
+\begin{lstlisting}[language=ML, caption=Custom Induction Pattern (Extreme\_Cases.thy)]
+function fib :: "nat => nat" where
+  "fib 0 = 0" |
+  "fib (Suc 0) = 1" |
+  "fib (Suc (Suc n)) = fib (Suc n) + fib n"
+  by pat_completeness auto
+termination by (relation "measure id") auto
+
+lemma fib_positive: "n > 0 ==> fib n > 0"
+  by (induction n rule: fib.induct) auto  (* Native proof succeeds *)
+  (* sledgehammer times out *)
+\end{lstlisting}
+
+Again, Sledgehammer failed while native tactics succeeded immediately. This suggests that user-defined induction principles, which are common in realistic Isabelle developments, do not map cleanly to the first-order reasoning that external provers employ. Similar issues arose with complex nested set operations involving multiple quantifiers and structural recursion.
 
 These timeouts are not integration bugs in the technical sense---Sledgehammer correctly reports that no proof was found within the time limit and returns control to the user. However, they reveal where Sledgehammer's automation falls short. Users working with mutual recursion, custom induction schemes, or complex nested operations should expect Sledgehammer to struggle and may save time by immediately using native tactics. For tool developers, these patterns suggest specific encoding improvements: better support for recursive definitions in TPTP translation, or hybrid strategies that recognize when problems are better suited to native tactics than external provers.
 
@@ -381,7 +422,7 @@ Our oracle design provides a template for other researchers building accurate te
 
 Our work provides immediate practical value to multiple stakeholder communities. 
 
-\textbf{For Isabelle developers and maintainers}, our comprehensive testing campaign provides empirical confirmation that the Sledgehammer integration layer is highly stable and robust. The fact that 130 diverse mutations produced zero integration bugs, validated by official Mirabelle testing, gives strong confidence that the interface handles edge cases correctly. Additionally, our identification of problematic prover configurations (specifically, which provers timeout or error on which types of problems) can inform default prover selection strategies in future Isabelle releases. Perhaps most valuably, our framework provides a ready-made regression testing infrastructure that can be deployed whenever Sledgehammer's encoding strategies or integration logic are modified, ensuring that changes do not introduce new bugs.
+\textbf{For Isabelle developers and maintainers}, our extensive testing campaign provides empirical confirmation that the Sledgehammer integration layer is highly stable and dependable. The fact that 130 diverse mutations produced zero integration bugs, validated by official Mirabelle testing, gives strong confidence that the interface handles edge cases correctly. Additionally, our identification of problematic prover configurations (specifically, which provers timeout or error on which types of problems) can inform default prover selection strategies in future Isabelle releases. Perhaps most valuably, our framework provides a ready-made regression testing infrastructure that can be deployed whenever Sledgehammer's encoding strategies or integration logic are modified, ensuring that changes do not introduce new bugs.
 
 \textbf{For prover developers}, particularly those maintaining E Prover, cvc5, and Z3, our work delivers 519 concrete bug reports documenting specific performance issues. Each bug report includes the triggering TPTP problem, the observed behavior (timeout, error, or slowdown), and comparison with other provers' behaviors on the same problem. Analysis of these bugs reveals patterns of problematic problems---for instance, certain quantifier structures or arithmetic reasoning patterns that consistently trigger timeouts in E Prover but not in cvc5. These patterns represent concrete opportunities for optimization and strategy improvement that could enhance prover performance on realistic theorem proving workloads.
 
@@ -413,23 +454,23 @@ Several factors may limit the generalizability of our findings and warrant caref
 
 \section{Conclusion}
 
-This paper presents a comprehensive testing framework for the Isabelle Sledgehammer ecosystem, addressing both prover reliability and integration robustness through a dual approach.
+This paper presents a holistic testing framework for the Isabelle Sledgehammer ecosystem, addressing both prover reliability and integration resilience through a dual approach.
 
-This work makes four key empirical and methodological achievements. First, through systematic differential testing of over 1000 TPTP problems across three major automated theorem provers, we discovered 519 performance bugs encompassing timeouts, errors, and slowdowns. These bugs represent concrete, reproducible failures that impact real-world users of Sledgehammer. The scale and systematic nature of this bug discovery demonstrates the effectiveness of differential testing for automated reasoning tools.
+This work makes four key empirical and methodological achievements. First, through rigorous differential testing of over 1000 TPTP problems across three major automated theorem provers, we discovered 519 performance bugs encompassing timeouts, errors, and slowdowns. These bugs represent concrete, reproducible failures that impact real-world users of Sledgehammer. The scale and methodical nature of this bug discovery demonstrates the effectiveness of differential testing for automated reasoning tools.
 
 Second, we developed and deployed a complete AST-based fuzzer specifically designed for Isabelle theories, implementing 10 distinct mutation operators that target different aspects of the Sledgehammer integration. Unlike generic fuzzing tools that operate on bytes or tokens, our fuzzer understands Isabelle's grammar and can perform semantically meaningful transformations while maintaining syntactic validity. This grammar-aware approach represents an advance over naive mutation strategies and could serve as a template for fuzzing other domain-specific languages.
 
 Third, we developed a precise bug detection oracle that achieves a 0\% false positive rate through multi-layered contextual analysis. The oracle employs success indicator checking, critical error detection, theory error filtering, and interface issue identification, validated through perfect alignment with Mirabelle. This design demonstrates that building accurate test oracles requires both sophisticated classification logic and rigorous validation against ground truth.
 
-Fourth, our comprehensive testing campaign provides the first systematic empirical confirmation of Sledgehammer's integration stability. Testing 130 diverse mutations across multiple theory domains, validated by Isabelle's official Mirabelle tool, we found zero integration bugs. While this might seem like a negative result, it is actually a valuable positive finding: it empirically confirms that Isabelle's engineering team has built a robust and reliable integration layer. This finding helps direct future testing efforts toward prover performance rather than interface reliability.
+Fourth, our extensive testing campaign provides the first rigorous empirical confirmation of Sledgehammer's integration stability. Testing 130 diverse mutations across multiple theory domains, validated by Isabelle's official Mirabelle tool, we found zero integration bugs. While this might seem like a negative result, it is actually a valuable positive finding: it empirically confirms that Isabelle's engineering team has built a dependable and resilient integration layer. This finding helps direct future testing efforts toward prover performance rather than interface reliability.
 
 From a methodological perspective, we contribute several generalizable techniques. Our two-phase verification workflow, combining fast custom oracle screening with slow but accurate official tool validation, represents a practical solution to the oracle accuracy problem in fuzzing research. The contextual error analysis techniques we developed---examining success markers, distinguishing critical errors from warnings, filtering theory-level errors, and focusing on interface-specific issues---are applicable to building oracles in other testing contexts. Our AST-based mutation strategies for logical formulas extend grammar-aware fuzzing to the theorem proving domain. The oracle design, validated through rigorous comparison with authoritative tools, provides a template that other researchers can follow when developing accurate test oracles for domains where ground truth validation is available.
 
-The practical impact of our work extends to both users and developers. Sledgehammer users can have confidence that integration bugs are unlikely to be the source of proof automation failures; performance issues with underlying provers are the more probable cause. Isabelle developers gain both reassurance about interface stability and concrete prover performance data that can inform prover selection and configuration decisions. Prover developers receive detailed bug reports that can guide optimization efforts. The broader formal methods community gains a reusable testing framework and a demonstration that systematic testing can yield significant bug discoveries while maintaining scientific rigor.
+The practical impact of our work extends to both users and developers. Sledgehammer users can have confidence that integration bugs are unlikely to be the source of proof automation failures; performance issues with underlying provers are the more probable cause. Isabelle developers gain both reassurance about interface stability and concrete prover performance data that can inform prover selection and configuration decisions. Prover developers receive detailed bug reports that can guide optimization efforts. The broader formal methods community gains a reusable testing framework and a demonstration that methodical testing can yield significant bug discoveries while maintaining scientific rigor.
 
 Future work should pursue several directions. Extended fuzzing campaigns with thousands of mutations could reveal rarer edge cases. Adaptation of our framework to other proof assistants such as Coq, Lean, or HOL4 would test the generalizability of our approach. Coverage-guided mutation, where mutation strategies are informed by code coverage data from Sledgehammer, could improve bug-finding efficiency. Investigation of semantic-preserving mutations that maintain lemma provability while varying syntactic structure could test different aspects of the integration. Finally, longitudinal studies tracking bug discovery across Isabelle and prover versions could provide insights into software evolution and regression patterns in formal methods tools.
 
-This work demonstrates that systematic testing of proof assistant ecosystems can yield significant bug discoveries while maintaining scientific rigor through official tool validation. The 519 prover bugs and confirmed Sledgehammer stability represent concrete contributions to formal verification reliability.
+This work demonstrates that rigorous testing of proof assistant ecosystems can yield significant bug discoveries while maintaining scientific rigor through official tool validation. The 519 prover bugs and confirmed Sledgehammer stability represent concrete contributions to formal verification reliability.
 
 \section*{Acknowledgments}
 
