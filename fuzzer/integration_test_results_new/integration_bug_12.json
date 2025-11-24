@@ -1,0 +1,10 @@
+{
+  "bug_type": "proof_method_error",
+  "thy_file": "/Users/linqilan/Downloads/KEP AWS/test_theories/Test_RecordTypes.thy",
+  "lemma_name": null,
+  "prover": null,
+  "description": "Proof方法应用失败",
+  "isabelle_output": "Loading theory \"Draft.Test_RecordTypes\"\n*** Failed to apply initial proof method (line 13 of \"~/Downloads/KEP AWS/test_theories/Test_RecordTypes.thy\"):\n*** goal (1 subgoal):\n***  1. x (make 3 4) = 3\n*** At command \"by\" (line 13 of \"~/Downloads/KEP AWS/test_theories/Test_RecordTypes.thy\")\n*** Failed to finish proof (line 17 of \"~/Downloads/KEP AWS/test_theories/Test_RecordTypes.thy\"):\n*** goal (1 subgoal):\n***  1. x (make (Suc 0) 2) = Suc 0\n*** At command \"by\" (line 17 of \"~/Downloads/KEP AWS/tes",
+  "isabelle_error": "",
+  "execution_time": 2.1176350116729736
+}

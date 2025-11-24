@@ -1,0 +1,15 @@
+{
+  "total_tests": 1888,
+  "crashes": 0,
+  "timeouts": 0,
+  "differentials": 0,
+  "bugs_found": 0,
+  "total_execution_time": 53.60873484611511,
+  "avg_execution_time": 0.0283944570159508,
+  "seeds_processed": 100,
+  "mutants_generated": 1888,
+  "start_time": "2025-11-21T20:04:34.427593",
+  "end_time": "2025-11-21T20:11:22.826880",
+  "bug_reports_count": 0,
+  "differential_reports_count": 0
+}

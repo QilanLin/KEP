@@ -1,0 +1,17 @@
+{
+  "campaign_name": "medium_scale",
+  "start_time": 1763931308.694179,
+  "end_time": 1763931345.034174,
+  "seed_theories": 5,
+  "mutations_generated": 19,
+  "mutations_tested": 19,
+  "bugs_found": 0,
+  "bugs_verified": 0,
+  "false_positives": 0,
+  "unique_error_types": 0,
+  "mutation_types_used": 7,
+  "avg_test_time": 1.9122969978734066,
+  "total_time": 36.33999490737915,
+  "bug_finding_rate": 0.0,
+  "verification_precision": 0.0
+}

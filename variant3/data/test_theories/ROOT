@@ -1,0 +1,6 @@
+session Test_Theories = "HOL-Library" +
+  options [timeout = 600]
+  theories
+    Simple_Valid_Tests
+    Challenging_Cases
+    Extreme_Cases

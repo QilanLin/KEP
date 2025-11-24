@@ -1,0 +1,10 @@
+{
+  "bug_type": "undefined_reference",
+  "thy_file": "/Users/linqilan/Downloads/KEP AWS/test_theories/Test_Sorting.thy",
+  "lemma_name": null,
+  "prover": null,
+  "description": "未定义的引用",
+  "isabelle_output": "Loading theory \"Draft.Test_Sorting\"\n### theory \"Draft.Test_Sorting\"\n### 0.050s elapsed time, 0.073s cpu time, 0.000s GC time\n*** Undefined fact: \"sorted_Cons\" (line 15 of \"~/Downloads/KEP AWS/test_theories/Test_Sorting.thy\")\n*** At command \"by\" (line 15 of \"~/Downloads/KEP AWS/test_theories/Test_Sorting.thy\")\n*** Undefined fact: \"sorted_Cons\" (line 15 of \"~/Downloads/KEP AWS/test_theories/Test_Sorting.thy\")\n*** At command \"by\" (line 15 of \"~/Downloads/KEP AWS/test_theories/Test_Sorting.thy\")\nExc",
+  "isabelle_error": "",
+  "execution_time": 1.975604772567749
+}

@@ -73,25 +73,59 @@ class ProverPathCache:
     def __init__(self):
         """初始化路径缓存"""
         self._prover_paths: Dict[str, Optional[str]] = {}
+        
+        # 支持的prover及其可能的命令名称
+        self.prover_commands = {
+            'z3': ['z3'],
+            'cvc5': ['cvc5'],
+            'eprover': ['eprover', 'eprover-ho'],
+            'vampire': ['vampire', 'vampire_mac'],
+            'spass': ['spass'],
+        }
     
-    @lru_cache(maxsize=4)
+    @lru_cache(maxsize=10)
     def get_prover_path(self, prover_name: str) -> Optional[str]:
         """
         获取prover路径（带缓存）
         
         Args:
-            prover_name: Prover名称（'z3' 或 'cvc5'）
+            prover_name: Prover名称（'z3', 'cvc5', 'eprover', 'vampire', 'spass'）
         
         Returns:
             Prover路径或None
         """
         import shutil
         
-        if prover_name not in self._prover_paths:
-            path = shutil.which(prover_name)
-            self._prover_paths[prover_name] = path
+        if prover_name in self._prover_paths:
+            return self._prover_paths[prover_name]
         
-        return self._prover_paths[prover_name]
+        # 检查prover是否在支持列表中
+        if prover_name not in self.prover_commands:
+            return None
+        
+        # 尝试每个可能的命令名称
+        for cmd in self.prover_commands[prover_name]:
+            path = shutil.which(cmd)
+            if path:
+                self._prover_paths[prover_name] = path
+                return path
+        
+        # 如果没有找到，缓存None
+        self._prover_paths[prover_name] = None
+        return None
+    
+    def list_available_provers(self) -> list:
+        """
+        列出所有可用的prover
+        
+        Returns:
+            可用prover名称列表
+        """
+        available = []
+        for prover_name in self.prover_commands.keys():
+            if self.get_prover_path(prover_name):
+                available.append(prover_name)
+        return available
     
     def clear(self):
         """清空缓存"""

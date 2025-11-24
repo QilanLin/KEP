@@ -1,0 +1,10 @@
+{
+  "bug_type": "unexpected_behavior",
+  "thy_file": "/Users/linqilan/Downloads/KEP AWS/test_theories/Extreme_Cases.thy",
+  "lemma_name": null,
+  "prover": null,
+  "description": "Isabelle执行错误",
+  "isabelle_output": "Loading theory \"HOL-Library.Cancellation\" (required by \"Draft.Extreme_Cases\" via \"HOL-Library.Multiset\")\nLoading theory \"HOL-Library.Nat_Bijection\" (required by \"Draft.Extreme_Cases\" via \"HOL-Library.FSet\" via \"HOL-Library.Countable\")\nLoading theory \"HOL-Library.Old_Datatype\" (required by \"Draft.Extreme_Cases\" via \"HOL-Library.FSet\" via \"HOL-Library.Countable\")\nFound termination order: \"(\\<lambda>p. size (snd p)) <*mlex*> {}\"\nFound termination order: \"size_list size <*mlex*> {}\"\n### theory \"HOL-",
+  "isabelle_error": "",
+  "execution_time": 5.574885129928589
+}

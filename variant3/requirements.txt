@@ -1,0 +1,31 @@
+# Sledgehammer Integration Testing Framework Requirements
+# Python 3.13+
+
+# Core dependencies
+typing-extensions>=4.8.0          # Type hints compatibility
+pathlib>=1.0.1                    # Path operations
+
+# Testing
+pytest>=7.4.0                     # Testing framework
+pytest-cov>=4.1.0                 # Coverage reporting
+
+# Data processing
+json>=2.0.9                       # JSON handling (stdlib)
+
+# Logging and monitoring
+colorlog>=6.7.0                   # Colored logging output
+
+# Automation
+subprocess>=1.0.0                 # Subprocess management (stdlib)
+
+# Optional: For advanced features
+pylint>=3.0.0                     # Code linting
+black>=23.0.0                     # Code formatting
+mypy>=1.7.0                       # Type checking
+
+# Note: The following are expected to be installed externally:
+# - Isabelle 2025 (https://isabelle.in.tum.de/)
+# - E Prover 3.1 (https://www.eprover.org/)
+# - cvc5 1.0.8 (https://cvc5.github.io/)
+# - Z3 4.12.2 (https://github.com/Z3Prover/z3)
+
