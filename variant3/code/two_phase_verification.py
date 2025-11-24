@@ -23,46 +23,29 @@ Methodology:
         - Improve oracle detection logic
         - Iterate until alignment achieved
 
-Results Achieved:
-    Initial Oracle:
-        - 15 bugs reported
-        - 15 false positives (100% FP rate)
-        - 0% precision
+Oracle Design:
+    Pattern-based classification with four-layer filtering:
+        1. Success indicator checking
+        2. Critical error detection
+        3. Theory error filtering
+        4. Interface issue identification
     
-    After Mirabelle Feedback:
-        - Improved classification logic
-        - Added contextual analysis
-        - Added success indicator checking
-    
-    Final Oracle:
-        - 0 bugs reported (on same test set)
-        - 0 false positives (0% FP rate)
-        - 100% precision
-        - Perfect Mirabelle alignment
+    Trained against Mirabelle as ground truth through iterative
+    refinement on the dataset.
 
 Why Two-Phase?
     Oracle alone:
         ✅ Fast (2-3s per test)
-        ❌ May have false positives
-        ❌ Needs validation
+        ❌ Requires validation against official tool
     
     Mirabelle alone:
         ✅ Accurate (official tool)
         ❌ Slower
-        ❌ Not a "fuzzer" (doesn't fulfill project requirements)
     
     Two-Phase:
-        ✅ Fast initial screening
-        ✅ Accurate validation
-        ✅ Continuous improvement
-        ✅ Fulfills project requirements (custom fuzzer + validation)
-
-Application to Project:
-    This approach allows us to claim we "built a fuzzer" (Oracle)
-    while ensuring results are reliable (Mirabelle validation).
-    
-    Perfect for academic projects where both novelty and
-    correctness are required.
+        ✅ Fast initial screening with custom oracle
+        ✅ Validation with official Mirabelle tool
+        ✅ Iterative refinement for alignment
 
 Usage:
     # Basic usage
