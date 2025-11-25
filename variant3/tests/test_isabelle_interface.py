@@ -3,7 +3,7 @@ Isabelle接口单元测试
 
 运行方式:
     pip install pytest pytest-cov pytest-mock
-    pytest tests/test_isabelle_interface.py -v --cov=oracle
+    pytest tests/test_isabelle_interface.py -v --cov=code
 """
 
 import pytest
@@ -14,10 +14,10 @@ from unittest.mock import Mock, patch, MagicMock
 import subprocess
 import sys
 
-# 添加oracle模块到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# 添加code模块到路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'code'))
 
-from oracle.isabelle_interface import (
+from isabelle_interface import (
     IsabelleInterface,
     IsabelleStatus,
     IsabelleResult,
@@ -370,5 +370,5 @@ def mock_subprocess_success():
 
 if __name__ == "__main__":
     # 运行测试
-    pytest.main([__file__, "-v", "--cov=oracle"])
+    pytest.main([__file__, "-v", "--cov=code"])
 

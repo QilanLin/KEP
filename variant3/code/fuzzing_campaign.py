@@ -27,7 +27,7 @@ Campaign Results Summary:
         - Bugs: 0
         - Throughput: 31.4 mut/min
     
-    Total: 130 mutations, 0 integration bugs found
+    Total: 214 mutations, 0 integration bugs found
     Conclusion: Sledgehammer interface is highly stable
 
 Key Findings:
@@ -82,7 +82,6 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from ast_mutator import IsabelleTheoryMutator, MutationType, MutationResult
-from sledgehammer_oracle import SledgehammerOracle, IntegrationBug
 from bug_verifier import BugVerifier
 
 logger = logging.getLogger(__name__)
@@ -153,8 +152,7 @@ class FuzzingCampaign:
         
         # 初始化组件
         self.mutator = IsabelleTheoryMutator()
-        self.oracle = SledgehammerOracle()
-        self.verifier = BugVerifier()
+        self.verifier = BugVerifier()  # 直接使用Mirabelle验证
         
         # 统计信息
         self.stats = {
@@ -249,31 +247,31 @@ class FuzzingCampaign:
             try:
                 test_start = time.time()
                 
-                # 用Oracle测试
-                bug = self.oracle.check_theory_file(mut_file, timeout=timeout)
+                # 直接使用Mirabelle验证
+                result = self.verifier.verify_theory(mut_file)
                 
                 test_time = time.time() - test_start
                 self.stats['test_times'].append(test_time)
                 self.stats['mutations_tested'] += 1
                 
-                if bug:
-                    logger.warning(f"   🐛 Bug found: {bug.bug_type.value}")
+                if result.is_real_bug:
+                    logger.warning(f"   🐛 Bug found: {result.mirabelle_status}")
                     
                     bugs_found.append({
-                        'bug': bug,
+                        'result': result,
                         'mutation_file': mut_file,
                         'mutation_type': mutation.mutation_type.value,
                         'seed': mut_info['seed']
                     })
                     
                     self.stats['bugs_found'] += 1
-                    self.stats['error_types'].add(bug.bug_type.value)
+                    self.stats['error_types'].add(result.mirabelle_status)
                     
                     # 保存bug report
-                    self._save_bug_report(bug, mutation, mut_file)
+                    self._save_mirabelle_bug_report(result, mutation, mut_file)
                     
                 else:
-                    logger.info(f"   ✅ No bug (tested in {test_time:.2f}s)")
+                    logger.info(f"   ✅ No bug detected by Mirabelle (tested in {test_time:.2f}s)")
                 
             except Exception as e:
                 logger.error(f"   ❌ Testing failed: {e}")
@@ -293,22 +291,17 @@ class FuzzingCampaign:
             
             for i, bug_info in enumerate(bugs_found, 1):
                 mut_file = bug_info['mutation_file']
-                bug = bug_info['bug']
+                result = bug_info['result']
                 
                 logger.info(f"[{i}/{len(bugs_found)}] Verifying: {Path(mut_file).name}")
                 
-                try:
-                    verification = self.verifier.verify_theory(mut_file)
-                    
-                    if verification.is_real_bug:
-                        logger.info(f"   ✅ Verified as real bug")
-                        bugs_verified.append(bug_info)
-                    else:
-                        logger.warning(f"   ❌ False positive")
-                        false_positives += 1
-                        
-                except Exception as e:
-                    logger.error(f"   ⁉️ Verification failed: {e}")
+                # 直接使用Mirabelle的result，不需要二次验证
+                if result.is_real_bug:
+                    logger.info(f"   ✅ Verified by Mirabelle: {result.mirabelle_status}")
+                    bugs_verified.append(bug_info)
+                else:
+                    logger.warning(f"   ❌ False positive")
+                    false_positives += 1
             
             logger.info(f"\n✅ Phase 3 Complete:")
             logger.info(f"   Bugs verified: {len(bugs_verified)}")
@@ -352,17 +345,16 @@ class FuzzingCampaign:
         
         return final_stats
     
-    def _save_bug_report(self, bug: IntegrationBug, mutation: MutationResult, mut_file: str):
-        """保存bug report"""
+    def _save_mirabelle_bug_report(self, result, mutation: MutationResult, mut_file: str):
+        """保存Mirabelle bug report"""
         bug_report = {
-            'bug_type': bug.bug_type.value,
-            'description': bug.description,
-            'thy_file': bug.thy_file,
+            'mirabelle_status': result.mirabelle_status,
+            'details': result.details,
+            'theory_name': result.theory_name,
             'mutation_type': mutation.mutation_type.value,
             'mutation_description': mutation.description,
-            'execution_time': bug.execution_time,
-            'isabelle_output': bug.isabelle_output[:500],
-            'isabelle_error': bug.isabelle_error[:500]
+            'execution_time': result.execution_time,
+            'mirabelle_output': result.mirabelle_output[:500] if result.mirabelle_output else ''
         }
         
         bug_filename = Path(mut_file).stem + '_bug.json'

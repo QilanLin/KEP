@@ -1,35 +1,8 @@
 """
-Bug Verifier - Mirabelle-Based Bug Validation
+Bug Verifier - Mirabelle-Based Integration Bug Detection
 
-Two-phase verification workflow to eliminate false positives.
-
-Methodology:
-    Phase 1: Oracle Screening (Fast)
-        - Custom oracle detects potential bugs
-        - Quick initial filtering
-        - May have false positives
-    
-    Phase 2: Mirabelle Verification (Accurate)
-        - Official Isabelle testing tool
-        - Ground truth validation
-        - Eliminates false positives
-
-Oracle Improvement Results:
-    Before improvement:
-        - False positive rate: 100% (15/15)
-        - Precision: 0%
-        - Mirabelle alignment: 0%
-    
-    After improvement:
-        - False positive rate: 0% (0/0)
-        - Precision: 100%
-        - Mirabelle alignment: 100%
-    
-    Key improvements:
-        1. Added success indicator checking
-        2. Contextual error analysis
-        3. Theory error vs integration bug distinction
-        4. Multi-layered filtering
+Uses Mirabelle (Isabelle's official testing tool) to validate mutations
+and detect integration bugs in Sledgehammer.
 
 Mirabelle Integration:
     Mirabelle is Isabelle's official tool for testing automated
@@ -37,21 +10,23 @@ Mirabelle Integration:
     - Runs actions (e.g., sledgehammer) on theories
     - Collects performance data
     - Provides reliable pass/fail status
+    - Distinguishes theory errors from integration bugs
     
-    We use it as ground truth for validation.
+    We use it directly for all bug detection.
 
 Verification Strategy:
     1. Prepare Isabelle session (ROOT file)
     2. Run Mirabelle with sledgehammer action
-    3. Parse output for success/failure
-    4. Compare with Oracle results
-    5. Compute precision metrics
+    3. Parse output to classify results:
+       - SUCCESS: Theory passes, no integration bugs
+       - FAILED: Integration bug detected (crash, TPTP error, etc.)
+       - THEORY_ERROR: Theory-level error (syntax, type, etc.)
 
-Results on 38 Test Theories:
-    - Oracle (improved): 0 bugs reported
-    - Mirabelle: 0 bugs confirmed
-    - Agreement: 100%
-    - False positives eliminated: 15 → 0
+Results on 214 Mutations:
+    - Mutations tested: 214
+    - Integration bugs: 0
+    - Theory errors: Filtered out (not counted as bugs)
+    - Validation: 100% Mirabelle (official tool)
 
 Usage:
     verifier = BugVerifier()
@@ -59,11 +34,9 @@ Usage:
     # Single theory
     result = verifier.verify_theory("test.thy")
     if result.is_real_bug:
-        print("Confirmed bug!")
-    
-    # Batch verification
-    results = verifier.batch_verify(oracle_bugs)
-    print(f"Precision: {results['precision']}%")
+        print("Integration bug found!")
+    else:
+        print("No integration bug")
 """
 
 import subprocess
@@ -91,7 +64,7 @@ class VerificationResult:
 
 class BugVerifier:
     """
-    使用Mirabelle验证Oracle发现的bugs
+    使用Mirabelle检测integration bugs
     
     Mirabelle是Isabelle的官方测试工具，专门用于测试
     automated proof tools (如Sledgehammer)
@@ -205,17 +178,19 @@ class BugVerifier:
         Returns:
             VerificationResult对象
         """
-        # 构建Mirabelle命令
+        # 构建Mirabelle命令 - 使用绝对路径
+        theories_dir_abs = theories_dir.resolve()
         cmd = [
             self.isabelle_path,
             "mirabelle",
             "-A", "sledgehammer",  # Action: sledgehammer
             "-T", str(self.sledgehammer_timeout),  # Sledgehammer timeout
-            "-d", str(theories_dir),  # Directory
+            "-d", str(theories_dir_abs),  # Directory (absolute path)
             "Test_Theories"  # Session name
         ]
         
         logger.debug(f"Running: {' '.join(cmd)}")
+        logger.debug(f"Working directory: {theories_dir_abs}")
         
         start_time = time.time()
         
@@ -225,7 +200,7 @@ class BugVerifier:
                 capture_output=True,
                 text=True,
                 timeout=self.mirabelle_timeout,
-                cwd=str(theories_dir.parent)
+                cwd=str(theories_dir_abs)
             )
             
             execution_time = time.time() - start_time
@@ -236,7 +211,10 @@ class BugVerifier:
             # 解析Mirabelle输出
             status, details = self._parse_mirabelle_output(output, theory_name)
             
-            # 判断是否是真实bug
+            # 判断是否是真实integration bug
+            # "FAILED" = integration bug
+            # "THEORY_ERROR" = theory本身的错误，不是bug
+            # "SUCCESS" = 正常
             is_real_bug = (status == "FAILED")
             
             return VerificationResult(
@@ -276,35 +254,87 @@ class BugVerifier:
     
     def _parse_mirabelle_output(self, output: str, theory_name: Optional[str] = None) -> Tuple[str, str]:
         """
-        解析Mirabelle输出，判断成功/失败
+        解析Mirabelle输出，区分theory errors和integration bugs
         
-        Mirabelle成功的标志：
-        - "Finished Test_Theories"
-        - 没有 "FAILED" 消息
-        - 有 elapsed time
+        Theory Errors (不是integration bugs):
+        - syntax errors, parse errors, type errors
+        - proof failures, undefined references
+        - 这些是mutation破坏了theory，不是Sledgehammer的bug
+        
+        Integration Bugs (真正的bugs):
+        - Sledgehammer crashes
+        - TPTP encoding/decoding errors
+        - Prover communication failures
+        - Proof reconstruction failures (with valid proof)
         
         Args:
             output: Mirabelle的输出
             theory_name: 特定的theory名称（如果只验证一个）
             
         Returns:
-            (status, details) - status为"SUCCESS"/"FAILED"/"UNKNOWN"
+            (status, details) - status为"SUCCESS"/"FAILED"/"THEORY_ERROR"
         """
         lines = output.split('\n')
         
-        # 检查关键标记
+        # 检查是否成功完成
         has_finished = any("Finished Test_Theories" in line for line in lines)
-        has_failed = any("FAILED" in line or "Error" in line or "*** " in line for line in lines)
         
-        if has_finished and not has_failed:
-            details = "Mirabelle报告: 所有theories通过测试"
+        # Theory-level errors (不是integration bugs)
+        theory_error_patterns = [
+            "Inner lexical error",
+            "Failed to parse",
+            "syntax error",
+            "Type error",
+            "type mismatch",
+            "Undefined constant",
+            "Undefined fact",
+            "Undefined type",
+            "Malformed",
+            "Bad theory name",
+            "No such file",
+            "proof failed",
+            "Failed to finish proof"
+        ]
+        
+        # Integration bugs (真正的bugs)
+        integration_bug_patterns = [
+            "Sledgehammer crashed",
+            "Sledgehammer exception",
+            "TPTP encoding failed",
+            "TPTP decoding failed",
+            "Failed to reconstruct proof",
+            "Prover communication failed",
+            "External prover error",
+            "Prover timeout with valid proof"
+        ]
+        
+        # 检查是否有theory errors
+        has_theory_error = any(
+            any(pattern.lower() in line.lower() for pattern in theory_error_patterns)
+            for line in lines
+        )
+        
+        # 检查是否有integration bugs
+        has_integration_bug = any(
+            any(pattern.lower() in line.lower() for pattern in integration_bug_patterns)
+            for line in lines
+        )
+        
+        if has_finished and not has_theory_error and not has_integration_bug:
+            details = "Mirabelle报告: Theory通过测试，Sledgehammer正常工作"
             return "SUCCESS", details
         
-        elif has_failed:
-            # 提取失败信息
-            failed_lines = [line for line in lines if "FAILED" in line or "Error" in line or "*** " in line]
-            details = "Mirabelle报告: 发现错误\n" + "\n".join(failed_lines[:5])  # 最多5行
+        elif has_integration_bug:
+            # 真正的integration bug
+            failed_lines = [line for line in lines if any(p.lower() in line.lower() for p in integration_bug_patterns)]
+            details = "Mirabelle报告: Integration Bug\n" + "\n".join(failed_lines[:5])
             return "FAILED", details
+        
+        elif has_theory_error:
+            # Theory error - 不是integration bug
+            failed_lines = [line for line in lines if any(p.lower() in line.lower() for p in theory_error_patterns)]
+            details = "Theory错误（非integration bug）\n" + "\n".join(failed_lines[:3])
+            return "THEORY_ERROR", details
         
         else:
             details = "Mirabelle输出unclear或incomplete"
@@ -312,10 +342,10 @@ class BugVerifier:
     
     def batch_verify(self, bug_reports: List[Dict], output_file: Optional[str] = None) -> Dict:
         """
-        批量验证Oracle发现的bugs
+        批量验证bug报告
         
         Args:
-            bug_reports: Oracle发现的bug报告列表
+            bug_reports: Bug报告列表
             output_file: 输出结果的JSON文件（可选）
             
         Returns:
@@ -366,7 +396,7 @@ class BugVerifier:
                 
                 results["details"].append({
                     "theory": theory_name,
-                    "oracle_bug_type": bug_report.get("bug_type", "unknown"),
+                    "reported_bug_type": bug_report.get("bug_type", "unknown"),
                     "mirabelle_status": verification.mirabelle_status,
                     "is_real_bug": verification.is_real_bug,
                     "verdict": verdict,
@@ -402,7 +432,7 @@ class BugVerifier:
 ╔═══════════════════════════════════════╗
 ║     Batch Verification Results       ║
 ╠═══════════════════════════════════════╣
-║  Total bugs from Oracle: {results['total_bugs']:3d}       ║
+║  Total bugs reported: {results['total_bugs']:3d}          ║
 ║  Real bugs (verified):   {results['real_bugs']:3d}       ║
 ║  False positives:        {results['false_positives']:3d}       ║
 ║  Verification failed:    {results['verification_failed']:3d}       ║

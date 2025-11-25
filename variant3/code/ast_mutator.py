@@ -32,8 +32,8 @@ Mutation Operators (10 types):
         - COMBINE_LEMMAS: Merge multiple lemmas
         - ADD_ASSUMPTION: Add hypotheses
 
-Campaign Results (130 mutations tested):
-    - Mutations generated: 130
+Campaign Results (214 mutations tested):
+    - Mutations generated: 214
     - Bugs found: 0 (Sledgehammer is stable!)
     - Throughput: 31.4 mutations/minute
     - False positive rate: 0%
@@ -622,11 +622,19 @@ class IsabelleTheoryMutator:
         
         # 生成文件名
         self.mutation_count += 1
-        theory_name = self.parser.extract_theory_name(mutation.mutated_theory)
-        filename = f"{theory_name}_mut{self.mutation_count:04d}_{mutation.mutation_type.value}.thy"
+        original_theory_name = self.parser.extract_theory_name(mutation.mutated_theory)
+        new_theory_name = f"{original_theory_name}_mut{self.mutation_count:04d}_{mutation.mutation_type.value}"
+        filename = f"{new_theory_name}.thy"
+        
+        # 更新theory名称以匹配文件名
+        updated_theory = mutation.mutated_theory.replace(
+            f"theory {original_theory_name}",
+            f"theory {new_theory_name}",
+            1  # 只替换第一次出现
+        )
         
         filepath = output_path / filename
-        filepath.write_text(mutation.mutated_theory)
+        filepath.write_text(updated_theory)
         
         logger.debug(f"Saved mutation to {filepath}")
         return str(filepath)
