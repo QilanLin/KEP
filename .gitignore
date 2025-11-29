@@ -67,8 +67,10 @@ test_results/
 
 # Isabelle相关（如果很大）
 *.thy.cache
+Isabelle2025/
 
 # 特定的测试输出目录（但保留项目结构）
 fuzzer/results/
 fuzzer/output/
+variant3/results/
 
