@@ -83,6 +83,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from ast_mutator import IsabelleTheoryMutator, MutationType, MutationResult
 from bug_verifier import BugVerifier
+from hidden_exception_detector import HiddenExceptionDetector
 
 logger = logging.getLogger(__name__)
 
@@ -104,17 +105,21 @@ class FuzzingStats:
     bugs_verified: int
     false_positives: int
     
+    # 【新增】隐藏异常统计
+    hidden_exceptions_found: int = 0  # 被 catch 块吞掉的异常数
+    hidden_exception_tests: int = 0   # 触发隐藏异常的测试数
+    
     # Coverage stats
-    unique_error_types: int
-    mutation_types_used: int
+    unique_error_types: int = 0
+    mutation_types_used: int = 0
     
     # Performance
-    avg_test_time: float
-    total_time: float
+    avg_test_time: float = 0.0
+    total_time: float = 0.0
     
     # Effectiveness
-    bug_finding_rate: float  # bugs / tests
-    verification_precision: float  # verified / found
+    bug_finding_rate: float = 0.0  # bugs / tests
+    verification_precision: float = 0.0  # verified / found
 
 
 class FuzzingCampaign:
@@ -152,7 +157,8 @@ class FuzzingCampaign:
         
         # 初始化组件
         self.mutator = IsabelleTheoryMutator()
-        self.verifier = BugVerifier()  # 直接使用Mirabelle验证
+        self.verifier = BugVerifier(check_hidden_exceptions=True)  # 启用隐藏异常检测
+        self.hidden_detector = HiddenExceptionDetector()  # 单独的检测器用于汇总
         
         # 统计信息
         self.stats = {
@@ -255,13 +261,19 @@ class FuzzingCampaign:
                 self.stats['mutations_tested'] += 1
                 
                 if result.is_real_bug:
-                    logger.warning(f"   🐛 Bug found: {result.mirabelle_status}")
+                    # 【重要】区分隐藏异常和其他类型的 bug
+                    if result.mirabelle_status == "HIDDEN_EXCEPTION":
+                        logger.warning(f"   🔴 隐藏异常发现! (被 catch 块吞掉的异常)")
+                        self.stats['hidden_exceptions'] = self.stats.get('hidden_exceptions', 0) + 1
+                    else:
+                        logger.warning(f"   🐛 Bug found: {result.mirabelle_status}")
                     
                     bugs_found.append({
                         'result': result,
                         'mutation_file': mut_file,
                         'mutation_type': mutation.mutation_type.value,
-                        'seed': mut_info['seed']
+                        'seed': mut_info['seed'],
+                        'is_hidden_exception': result.mirabelle_status == "HIDDEN_EXCEPTION"
                     })
                     
                     self.stats['bugs_found'] += 1
@@ -279,6 +291,7 @@ class FuzzingCampaign:
         logger.info(f"\n✅ Phase 2 Complete:")
         logger.info(f"   Mutations tested: {self.stats['mutations_tested']}")
         logger.info(f"   Bugs found: {self.stats['bugs_found']}")
+        logger.info(f"   Hidden exceptions: {self.stats.get('hidden_exceptions', 0)}")
         logger.info(f"   Unique error types: {len(self.stats['error_types'])}")
         
         # Phase 3: 验证bugs (optional)
@@ -319,6 +332,10 @@ class FuzzingCampaign:
         else:
             verification_precision = 0.0
         
+        # 【新增】计算隐藏异常统计
+        hidden_exceptions_count = self.stats.get('hidden_exceptions', 0)
+        hidden_exception_tests = sum(1 for b in bugs_found if b.get('is_hidden_exception', False))
+        
         final_stats = FuzzingStats(
             campaign_name=self.campaign_name,
             start_time=start_time,
@@ -329,6 +346,8 @@ class FuzzingCampaign:
             bugs_found=self.stats['bugs_found'],
             bugs_verified=len(bugs_verified) if verify_bugs else 0,
             false_positives=false_positives if verify_bugs else 0,
+            hidden_exceptions_found=hidden_exceptions_count,
+            hidden_exception_tests=hidden_exception_tests,
             unique_error_types=len(self.stats['error_types']),
             mutation_types_used=len(self.stats['mutation_types']),
             avg_test_time=avg_test_time,
@@ -446,12 +465,30 @@ def main():
         default=120,
         help="Timeout per test (seconds)"
     )
+    parser.add_argument(
+        "--timestamp",
+        action="store_true",
+        help="Add timestamp to output directory name"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Verbose output"
+    )
     
     args = parser.parse_args()
     
-    # 确保输出目录存在
+    # 处理时间戳
     from pathlib import Path
-    output_path = Path(args.output_dir)
+    from datetime import datetime
+    
+    output_dir = args.output_dir
+    if args.timestamp:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = f"{args.output_dir}_{timestamp}"
+    
+    # 确保输出目录存在
+    output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
     # 设置日志
@@ -464,11 +501,15 @@ def main():
         ]
     )
     
+    # 设置日志级别
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
     # 运行campaign
     campaign = FuzzingCampaign(
         campaign_name=args.campaign_name,
         seed_dir=args.seed_dir,
-        output_dir=args.output_dir
+        output_dir=output_dir
     )
     
     stats = campaign.run_campaign(

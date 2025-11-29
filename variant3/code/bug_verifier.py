@@ -48,6 +48,9 @@ from pathlib import Path
 import json
 import time
 
+# 导入隐藏异常检测器
+from hidden_exception_detector import HiddenExceptionDetector
+
 logger = logging.getLogger(__name__)
 
 
@@ -79,7 +82,8 @@ class BugVerifier:
     def __init__(self, 
                  isabelle_path: str = "isabelle",
                  mirabelle_timeout: int = 120,
-                 sledgehammer_timeout: int = 30):
+                 sledgehammer_timeout: int = 30,
+                 check_hidden_exceptions: bool = True):
         """
         初始化BugVerifier
         
@@ -87,15 +91,21 @@ class BugVerifier:
             isabelle_path: isabelle命令的路径
             mirabelle_timeout: Mirabelle整体超时（秒）
             sledgehammer_timeout: Sledgehammer单个lemma超时（秒）
+            check_hidden_exceptions: 是否检查插桩日志中的隐藏异常
         """
         self.isabelle_path = isabelle_path
         self.mirabelle_timeout = mirabelle_timeout
         self.sledgehammer_timeout = sledgehammer_timeout
+        self.check_hidden_exceptions = check_hidden_exceptions
+        
+        # 初始化隐藏异常检测器
+        self.hidden_detector = HiddenExceptionDetector()
         
         logger.info(f"✅ BugVerifier初始化")
         logger.info(f"   Isabelle: {isabelle_path}")
         logger.info(f"   Mirabelle timeout: {mirabelle_timeout}s")
         logger.info(f"   Sledgehammer timeout: {sledgehammer_timeout}s")
+        logger.info(f"   检查隐藏异常: {check_hidden_exceptions}")
     
     def _prepare_session_root(self, theories_dir: Path) -> bool:
         """
@@ -178,6 +188,11 @@ class BugVerifier:
         Returns:
             VerificationResult对象
         """
+        # 【重要】测试前清空插桩日志
+        if self.check_hidden_exceptions:
+            self.hidden_detector.clear_logs()
+            logger.debug("📋 已清空插桩日志")
+        
         # 构建Mirabelle命令 - 使用绝对路径
         theories_dir_abs = theories_dir.resolve()
         cmd = [
@@ -208,6 +223,27 @@ class BugVerifier:
             
             logger.debug(f"Mirabelle output:\n{output}")
             
+            # 【重要】检查插桩日志中的隐藏异常
+            if self.check_hidden_exceptions:
+                hidden_result = self.hidden_detector.check_for_exceptions()
+                if hidden_result["found_exceptions"]:
+                    # 发现了被 catch 块吞掉的异常！这才是真正的 Integration Bug！
+                    logger.warning(f"🔴 发现 {hidden_result['exception_count']} 个隐藏异常！")
+                    
+                    exception_details = "\n".join([
+                        f"  [{exc.exception_type}] {exc.message}"
+                        for exc in hidden_result["exceptions"][:5]
+                    ])
+                    
+                    return VerificationResult(
+                        theory_name=theory_name or "All",
+                        is_real_bug=True,  # 这是真正的 Bug！
+                        mirabelle_output=output,
+                        mirabelle_status="HIDDEN_EXCEPTION",
+                        execution_time=execution_time,
+                        details=f"发现被 Sledgehammer catch 块吞掉的异常:\n{exception_details}\n\n原始日志:\n{hidden_result['raw_content'][:500]}"
+                    )
+            
             # 解析Mirabelle输出
             status, details = self._parse_mirabelle_output(output, theory_name)
             
@@ -229,6 +265,19 @@ class BugVerifier:
         except subprocess.TimeoutExpired:
             execution_time = time.time() - start_time
             logger.warning(f"⏱️ Mirabelle timeout after {execution_time:.1f}s")
+            
+            # 即使超时也检查隐藏异常
+            if self.check_hidden_exceptions:
+                hidden_result = self.hidden_detector.check_for_exceptions()
+                if hidden_result["found_exceptions"]:
+                    return VerificationResult(
+                        theory_name=theory_name or "All",
+                        is_real_bug=True,
+                        mirabelle_output="",
+                        mirabelle_status="HIDDEN_EXCEPTION",
+                        execution_time=execution_time,
+                        details=f"超时，但发现隐藏异常:\n{hidden_result['raw_content'][:500]}"
+                    )
             
             return VerificationResult(
                 theory_name=theory_name or "All",
