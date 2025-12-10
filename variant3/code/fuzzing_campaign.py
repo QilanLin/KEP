@@ -27,7 +27,7 @@ Campaign Results Summary:
         - Bugs: 0
         - Throughput: 31.4 mut/min
     
-    Total: 214 mutations, 0 integration bugs found
+    Total: 204 mutations, 0 integration bugs found
     Conclusion: Sledgehammer interface is highly stable
 
 Key Findings:
@@ -84,6 +84,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from ast_mutator import IsabelleTheoryMutator, MutationType, MutationResult
 from bug_verifier import BugVerifier
 from hidden_exception_detector import HiddenExceptionDetector
+from proof_reconstruction_tester import ProofReconstructionTester, ReconstructionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,11 @@ class FuzzingStats:
     # 【新增】隐藏异常统计
     hidden_exceptions_found: int = 0  # 被 catch 块吞掉的异常数
     hidden_exception_tests: int = 0   # 触发隐藏异常的测试数
+    
+    # 【新增】Proof Reconstruction 统计
+    reconstruction_tests: int = 0     # Reconstruction 测试次数
+    reconstruction_bugs: int = 0      # Reconstruction Bug 数量
+    reconstruction_success: int = 0   # Reconstruction 成功次数
     
     # Coverage stats
     unique_error_types: int = 0
@@ -159,6 +165,7 @@ class FuzzingCampaign:
         self.mutator = IsabelleTheoryMutator()
         self.verifier = BugVerifier(check_hidden_exceptions=True)  # 启用隐藏异常检测
         self.hidden_detector = HiddenExceptionDetector()  # 单独的检测器用于汇总
+        self.reconstruction_tester = ProofReconstructionTester()  # 【新增】Proof Reconstruction 测试器
         
         # 统计信息
         self.stats = {
@@ -178,7 +185,8 @@ class FuzzingCampaign:
                     mutations_per_seed: int = 20,
                     mutation_types: Optional[List[MutationType]] = None,
                     verify_bugs: bool = True,
-                    timeout: int = 120) -> FuzzingStats:
+                    timeout: int = 120,
+                    test_reconstruction: bool = True) -> FuzzingStats:
         """
         运行完整的Fuzzing Campaign
         
@@ -187,6 +195,7 @@ class FuzzingCampaign:
             mutation_types: 使用的mutation类型（None则全部）
             verify_bugs: 是否用Mirabelle验证bugs
             timeout: 每个test的timeout（秒）
+            test_reconstruction: 是否测试 Proof Reconstruction Bug（新增）
             
         Returns:
             Fuzzing统计信息
@@ -294,6 +303,57 @@ class FuzzingCampaign:
         logger.info(f"   Hidden exceptions: {self.stats.get('hidden_exceptions', 0)}")
         logger.info(f"   Unique error types: {len(self.stats['error_types'])}")
         
+        # 【新增】Phase 2.5: Proof Reconstruction 测试
+        reconstruction_bugs = []
+        reconstruction_success = 0
+        reconstruction_tested = 0
+        
+        if test_reconstruction:
+            logger.info("\n🔄 Phase 2.5: Testing Proof Reconstruction")
+            logger.info("-" * 70)
+            logger.info("检测 prover 返回的 proof 是否能在 Isabelle 中成功重构...")
+            
+            for i, mut_info in enumerate(all_mutations, 1):
+                mut_file = mut_info['file']
+                
+                if i > 20:  # 只测试前20个以节省时间
+                    logger.info(f"   (跳过剩余 {len(all_mutations) - 20} 个 mutations 的 reconstruction 测试)")
+                    break
+                
+                logger.info(f"[{i}/{min(len(all_mutations), 20)}] Reconstruction: {Path(mut_file).name}")
+                
+                try:
+                    recon_result = self.reconstruction_tester.test_theory(mut_file)
+                    reconstruction_tested += 1
+                    
+                    if recon_result.bug_found:
+                        logger.warning(f"   🐛 Reconstruction Bug: {recon_result.bug_type.value if recon_result.bug_type else 'unknown'}")
+                        reconstruction_bugs.append({
+                            'file': mut_file,
+                            'bug_type': recon_result.bug_type.value if recon_result.bug_type else 'unknown',
+                            'error': recon_result.reconstruction_error
+                        })
+                    elif recon_result.status == ReconstructionStatus.RECONSTRUCTION_SUCCESS:
+                        reconstruction_success += 1
+                        logger.info(f"   ✅ Reconstruction 成功")
+                    else:
+                        logger.info(f"   ⚪ {recon_result.status.value}")
+                        
+                except Exception as e:
+                    logger.error(f"   ❌ Reconstruction test failed: {e}")
+            
+            logger.info(f"\n✅ Phase 2.5 Complete:")
+            logger.info(f"   Reconstruction tested: {reconstruction_tested}")
+            logger.info(f"   Reconstruction success: {reconstruction_success}")
+            logger.info(f"   Reconstruction bugs: {len(reconstruction_bugs)}")
+            
+            # 保存 reconstruction bugs
+            if reconstruction_bugs:
+                recon_bugs_file = self.bugs_dir / "reconstruction_bugs.json"
+                with open(recon_bugs_file, 'w') as f:
+                    json.dump(reconstruction_bugs, f, indent=2)
+                logger.info(f"   💾 Bugs saved to: {recon_bugs_file}")
+        
         # Phase 3: 验证bugs (optional)
         bugs_verified = []
         false_positives = 0
@@ -353,7 +413,11 @@ class FuzzingCampaign:
             avg_test_time=avg_test_time,
             total_time=total_time,
             bug_finding_rate=bug_finding_rate,
-            verification_precision=verification_precision
+            verification_precision=verification_precision,
+            # 【新增】Reconstruction 统计
+            reconstruction_tests=reconstruction_tested if test_reconstruction else 0,
+            reconstruction_bugs=len(reconstruction_bugs) if test_reconstruction else 0,
+            reconstruction_success=reconstruction_success if test_reconstruction else 0
         )
         
         # 保存统计
@@ -418,6 +482,14 @@ class FuzzingCampaign:
         print(f"║    Bugs verified:          {stats.bugs_verified:4d}                           ║")
         print(f"║    False positives:        {stats.false_positives:4d}                           ║")
         print(f"║    Precision:              {stats.verification_precision*100:5.2f}%                        ║")
+        print("╠════════════════════════════════════════════════════════════════╣")
+        print(f"║  Proof Reconstruction Testing:                                ║")
+        print(f"║    Reconstruction tests:   {stats.reconstruction_tests:4d}                           ║")
+        print(f"║    Reconstruction success: {stats.reconstruction_success:4d}                           ║")
+        print(f"║    🐛 Reconstruction bugs: {stats.reconstruction_bugs:4d}                           ║")
+        print("╠════════════════════════════════════════════════════════════════╣")
+        print(f"║  Hidden Exception Detection:                                  ║")
+        print(f"║    Hidden exceptions:      {stats.hidden_exceptions_found:4d}                           ║")
         print("╚════════════════════════════════════════════════════════════════╝")
         print()
 
@@ -475,6 +547,17 @@ def main():
         action="store_true",
         help="Verbose output"
     )
+    parser.add_argument(
+        "--test-reconstruction",
+        action="store_true",
+        default=True,
+        help="Test Proof Reconstruction bugs (default: True)"
+    )
+    parser.add_argument(
+        "--no-reconstruction",
+        action="store_true",
+        help="Skip Proof Reconstruction testing"
+    )
     
     args = parser.parse_args()
     
@@ -512,10 +595,14 @@ def main():
         output_dir=output_dir
     )
     
+    # 确定是否测试 reconstruction
+    test_reconstruction = args.test_reconstruction and not args.no_reconstruction
+    
     stats = campaign.run_campaign(
         mutations_per_seed=args.mutations_per_seed,
         verify_bugs=args.verify_bugs,
-        timeout=args.timeout
+        timeout=args.timeout,
+        test_reconstruction=test_reconstruction
     )
     
     # Exit code based on results

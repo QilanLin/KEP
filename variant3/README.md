@@ -35,11 +35,11 @@ This repository contains a complete implementation of an AST-based fuzzing frame
   - cvc5: 143 bugs (27.6%)
   - Z3: 27 bugs (5.2%)
 
-- **0 integration bugs** found in 214 mutation tests (validated by Mirabelle)
+- **0 integration bugs** found in 204 mutation tests (validated by Mirabelle)
 
 - **3 Sledgehammer timeout cases** identified as capability boundaries (mutual recursion, custom induction, complex nested operations)
 
-- **214 mutations tested** using Mirabelle (Isabelle's official testing tool)
+- **204 mutations tested** using Mirabelle (Isabelle's official testing tool)
 
 - **0 integration bugs found** across all mutations
 
@@ -249,7 +249,7 @@ variant3/
 │   ├── test_isabelle_interface.py
 │   └── __init__.py
 ├── data/                        # Test data
-│   ├── seed_theories/          # 10 high-quality seed Isabelle theories
+│   ├── seed_theories/          # 11 high-quality seed Isabelle theories
 │   │   ├── Seed_Basic_Arithmetic.thy
 │   │   ├── Seed_List_Operations.thy
 │   │   ├── Seed_Set_Operations.thy
@@ -291,7 +291,7 @@ variant3/
 - Discovered 519 total bugs across all provers
 
 ### Phase 2: Integration Fuzzing
-- Generated 214 mutations from 10 seed Isabelle theories
+- Generated 204 mutations from 11 seed Isabelle theories
 - Used 10 AST-level mutation operators:
   1. FLIP_QUANTIFIER (∀ ↔ ∃)
   2. NEGATE_FORMULA (P → ¬P)
@@ -311,7 +311,7 @@ variant3/
   - Authoritative judgments
   - Direct validation (no custom oracle needed)
   
-- Result: 214 mutations tested, 0 integration bugs found
+- Result: 204 mutations tested, 0 integration bugs found
 
 ## System Requirements
 
@@ -582,7 +582,7 @@ throughput: ~12 tests/minute
 
 ### Running Full Integration Test
 ```
-mutations_tested: 214
+mutations_tested: 204
 integration_bugs_found: 0
 validation_method: Mirabelle (official tool)
 validation_coverage: 100%
@@ -603,7 +603,7 @@ test_isabelle_interface.py::... PASSED [100%]
   - Errors: 115 (22.2%)
   - Slowdowns: 116 (22.3%)
 
-- **Integration Fuzzing**: 0 bugs found in 214 mutations
+- **Integration Fuzzing**: 0 bugs found in 204 mutations
   - Confirms Sledgehammer interface stability
   - 100% alignment with Mirabelle validation
 
@@ -624,7 +624,7 @@ test_isabelle_interface.py::... PASSED [100%]
 ### Performance Metrics
 - **Testing Throughput**: 8.3 tests/minute (with Mirabelle validation)
 - **Average Test Time**: 7.2 seconds/test
-- **Mutations Tested**: 214
+- **Mutations Tested**: 204
 - **Integration Bugs Found**: 0
 
 ### Code Quality

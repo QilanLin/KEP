@@ -22,8 +22,8 @@ Verification Strategy:
        - FAILED: Integration bug detected (crash, TPTP error, etc.)
        - THEORY_ERROR: Theory-level error (syntax, type, etc.)
 
-Results on 214 Mutations:
-    - Mutations tested: 214
+Results on 204 Mutations:
+    - Mutations tested: 204
     - Integration bugs: 0
     - Theory errors: Filtered out (not counted as bugs)
     - Validation: 100% Mirabelle (official tool)

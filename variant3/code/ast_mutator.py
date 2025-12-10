@@ -32,8 +32,8 @@ Mutation Operators (10 types):
         - COMBINE_LEMMAS: Merge multiple lemmas
         - ADD_ASSUMPTION: Add hypotheses
 
-Campaign Results (214 mutations tested):
-    - Mutations generated: 214
+Campaign Results (204 mutations tested):
+    - Mutations generated: 204
     - Bugs found: 0 (Sledgehammer is stable!)
     - Throughput: 31.4 mutations/minute
     - False positive rate: 0%
