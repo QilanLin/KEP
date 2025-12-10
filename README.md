@@ -280,7 +280,9 @@ KEP AWS/
 
 ### Prover Performance Anomalies (519 found)
 
-**Discovery**: Differential testing across 1000+ TPTP problems
+**Methodology**: Differential testing across 1000+ TPTP problems
+
+**For detailed analysis**: See `paper_updated.pdf` (Section 5.2) and `paper_updated.tex` lines 130-131
 
 **Distribution by Prover**:
 - E Prover: 349 anomalies (67.2%)
@@ -288,9 +290,14 @@ KEP AWS/
 - Z3: 27 anomalies (5.2%)
 
 **Distribution by Type**:
-- Timeout: 288 (55.5%)
-- Error: 115 (22.2%)
-- Slowdown: 116 (22.3%)
+- Timeout: 288 cases (55.5%)
+- Error: 115 cases (22.2%)
+- Slowdown: 116 cases (22.3%)
+
+**Data Repository**:
+- Raw test results: `variant3/results/` (config_fuzzing, stress_test, aggressive_test, etc.)
+- Differential oracle implementation: `variant3/code/differential_oracle.py`
+- Complete campaign data: Available in research outputs
 
 ### Integration Layer Testing (267 tests)
 
