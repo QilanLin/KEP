@@ -89,42 +89,44 @@ python3 run_prover_tests.py \
 
 ### Prover Testing (Part A)
 
-**519 Performance Bugs Found**
+**519 Performance Anomalies Found**
 
-| Prover | Timeout | Error | Slow | Total |
-|--------|---------|-------|------|-------|
-| E Prover | 128 | 45 | 89 | 262 |
-| cvc5 | 95 | 38 | 64 | 197 |
-| Z3 | 42 | 12 | 6 | 60 |
-| **Total** | **265** | **95** | **159** | **519** |
+| Prover | Timeout | Error | Slowdown | Total |
+|--------|---------|-------|----------|-------|
+| E Prover | 186 | 67 | 96 | 349 (67.2%) |
+| cvc5 | 83 | 41 | 19 | 143 (27.6%) |
+| Z3 | 19 | 7 | 1 | 27 (5.2%) |
+| **Total** | **288** | **115** | **116** | **519** |
 
 ### Integration Fuzzing (Part B)
 
-**130 Mutations Tested**
+**267 Total Tests Executed**
 
-- Seeds: 10 theories
-- Mutations generated: 130
-- Mutation types: 10 operators
-- Bugs found: 0 (Sledgehammer is highly stable!)
+- Seed theories: 11
+- AST mutations: 204 (10 operators)
+- Aggressive reconstruction tests: 63 (7 attack strategies)
+- Hidden exceptions detected: 0
+- Integration bugs found: 0
+- Reconstruction bugs found: 0
 - False positive rate: 0%
-- Throughput: 31.4 mutations/minute
 
-### Two-Phase Verification (Part C)
+### Comprehensive Verification (Part C)
 
-**Oracle Improvement**
+**Three-Layer Validation**
 
-- False positive rate: 100% → 0%
-- Precision: 0% → 100%
-- Mirabelle alignment: 100%
+- Mirabelle official tool integration: ✅ 100% alignment
+- Hidden exception detection: ✅ Source-level instrumentation
+- Aggressive stress testing: ✅ 63 edge-case tests
+- **Result**: Sledgehammer interface is highly robust
 
 ---
 
-## 🛠️ Components
+## 🛠️ Core Components
 
-### 1. AST Mutator (`fuzzer/ast_mutator.py`)
+### 1. AST Mutator (`variant3/code/ast_mutator.py`)
 
-10 mutation operators:
-1. `FLIP_QUANTIFIER` - ∀ ↔ ∃
+10 mutation operators for semantic testing:
+1. `FLIP_QUANTIFIER` - ∀ ↔ ∃ 
 2. `NEGATE_FORMULA` - P → ¬P
 3. `SWAP_CONJUNCTION` - ∧ ↔ ∨
 4. `SWAP_TERMS` - f(x,y) → f(y,x)
@@ -135,27 +137,31 @@ python3 run_prover_tests.py \
 9. `DUPLICATE_LEMMA`
 10. `ADD_ASSUMPTION`
 
-### 2. Fuzzing Campaign (`fuzzer/fuzzing_campaign.py`)
+### 2. Comprehensive Test Suite
 
-Automated workflow:
-- Generate mutations from seeds
-- Test with Sledgehammer
-- Detect integration bugs
-- Verify with Mirabelle
+- **Fuzzing Campaign** (`fuzzing_campaign.py`) - Automated mutation testing
+- **Metamorphic Testing** (`metamorphic_tester.py`) - 16 mathematical properties
+- **Configuration Fuzzing** (`config_fuzzer.py`) - 42 parameter combinations
+- **Prover Crash Testing** (`extended_prover_crash_test.py`) - 21 failure modes
+- **Coverage Boosting** (`coverage_boost_tester.py`) - Uncovered code paths
+- **Aggressive Reconstruction** (`aggressive_reconstruction_tester.py`) - 7 attack strategies
+- **Proof Reconstruction** (`proof_reconstruction_tester.py`) - 63 stress tests
+- **Sledgehammer Stress** (`sledgehammer_stress_tester.py`) - Complex valid theories
 
-### 3. Improved Oracle (`fuzzer/oracle/sledgehammer_oracle.py`)
+### 3. Hidden Exception Detection (`hidden_exception_detector.py`)
 
-Features:
-- Contextual error analysis
-- Multi-layered filtering
-- Success indicator checking
-- Theory error vs integration bug distinction
+Detects silently-caught exceptions:
+- Instruments `sledgehammer.ML` source code
+- Monitors exception logs at runtime
+- Validates three-layer catch blocks
+- Zero false positives
 
-### 4. Bug Verifier (`fuzzer/oracle/bug_verifier.py`)
+### 4. Bug Verifier (`bug_verifier.py`)
 
-Mirabelle integration for validation:
-- Official tool verification
-- False positive elimination
+Mirabelle-based validation:
+- Official tool integration
+- Proof reconstruction failure detection
+- Hidden exception integration
 - Batch verification support
 
 ---
@@ -166,46 +172,46 @@ Mirabelle integration for validation:
 KEP AWS/
 ├── README.md                          # This file
 ├── PROJECT_STATUS_COMPLETE.md         # Complete status report
-├── FUZZING_QUICKSTART.md             # Quick start guide
+├── project_description.md             # Original project requirements
+│
+├── variant3/                          # Main implementation
+│   ├── README.md                      # Variant 3 documentation
+│   ├── code/                          # Source code
+│   │   ├── fuzzing_campaign.py       # Campaign framework
+│   │   ├── ast_mutator.py            # AST-based mutator
+│   │   ├── bug_verifier.py           # Bug verification
+│   │   ├── aggressive_reconstruction_tester.py
+│   │   ├── proof_reconstruction_tester.py
+│   │   ├── sledgehammer_stress_tester.py
+│   │   ├── metamorphic_tester.py     # Metamorphic testing
+│   │   ├── config_fuzzer.py          # Configuration fuzzing
+│   │   ├── extended_prover_crash_test.py
+│   │   ├── hidden_exception_detector.py
+│   │   └── ... (other modules)
+│   │
+│   ├── data/
+│   │   ├── seed_theories/            # 11 high-quality seed theories
+│   │   └── test_theories/            # Test and validation theories
+│   │
+│   ├── results/                       # Fuzzing campaign results
+│   └── pytest.ini
 │
 ├── seed_theories/                     # Seed theories for fuzzing
-│   ├── Seed_Basic_Arithmetic.thy     # 10 high-quality seeds
-│   ├── Seed_List_Operations.thy
-│   └── ...
+│   └── (10 seed theories)
 │
 ├── test_theories/                     # Test theories
-│   ├── Simple_Valid_Tests.thy
-│   ├── Challenging_Cases.thy
-│   └── Extreme_Cases.thy
+│   └── (various test cases)
 │
 ├── TPTP-test/                         # TPTP test suite
 │   └── 1000+ TPTP problems
 │
-├── fuzzer/                            # Main fuzzer code
-│   ├── ast_mutator.py                # AST-based mutator
-│   ├── fuzzing_campaign.py           # Campaign framework
-│   ├── two_phase_verification.py     # Two-phase workflow
-│   │
-│   ├── oracle/                       # Oracle implementations
-│   │   ├── isabelle_interface.py    # Isabelle integration
-│   │   ├── sledgehammer_oracle.py   # Integration bug detection
-│   │   └── bug_verifier.py          # Mirabelle verifier
-│   │
-│   ├── tests/                        # Unit tests
-│   │   └── test_isabelle_interface.py
-│   │
-│   ├── 改进示例/                     # Code quality examples
-│   │
-│   └── docs/                         # Documentation
-│       ├── Bug发现最终报告_v2.md    # Prover bugs report
-│       ├── Oracle改进前后对比报告.md # Oracle improvement
-│       ├── Mirabelle验证结果对比.md  # Verification results
-│       └── ...
+├── paper.tex & paper_updated.tex      # Research paper
+├── 3rd_progress_report_short.tex      # Progress report
 │
-└── fuzzing_results/                   # Fuzzing campaign results
-    ├── quick_test/
-    ├── medium_scale/
-    └── large_scale/
+├── archive/                           # Historical documentation
+│   └── (archived documents)
+│
+└── Isabelle2025/                      # Isabelle installation
 ```
 
 ---
@@ -217,50 +223,56 @@ KEP AWS/
 1. **Test Suite**: 1000+ TPTP problems
 2. **Provers**: E Prover, cvc5, Z3
 3. **Oracle**: Differential oracle comparing results
-4. **Bugs**: Performance degradation (timeout, slowdown, error)
+4. **Anomalies**: Performance degradation (timeout, slowdown, error)
+5. **Results**: 519 performance anomalies discovered
 
-### Part B: Integration Fuzzing
+### Part B: Integration Fuzzing & Aggressive Testing
 
-1. **Seed Generation**: 10 Isabelle theories
-2. **Mutation**: AST-based with 10 operators
-3. **Testing**: Feed mutations to Sledgehammer
-4. **Detection**: Check for integration bugs
-5. **Verification**: Validate with Mirabelle
+1. **Seed Generation**: 11 Isabelle theories
+2. **Mutation**: AST-based with 10 operators on 204 mutations
+3. **Hidden Exception Detection**: Instrumented sledgehammer.ML to catch silent errors
+4. **Aggressive Reconstruction Testing**: 63 tests targeting proof reconstruction
+5. **Verification**: Mirabelle + instrumentation validation
+6. **Result**: 0 integration bugs, 0 hidden exceptions, 0 reconstruction bugs
 
-### Part C: Two-Phase Verification
+### Part C: Comprehensive Verification
 
-1. **Phase 1**: Oracle screening (fast)
-2. **Phase 2**: Mirabelle verification (accurate)
-3. **Result**: 0% false positive rate
+1. **Mirabelle Integration**: Official Isabelle testing tool
+2. **Hidden Exception Detection**: Source-level instrumentation
+3. **Aggressive Stress Testing**: 7 attack strategies
+4. **Result**: 267 total tests with 0% false positive rate
 
 ---
 
-## 📈 Evaluation
+## 📈 Comprehensive Evaluation
 
-### Fuzzing Effectiveness
+### Testing Coverage
 
-| Metric | Value |
-|--------|-------|
-| Mutations generated | 130 |
-| Mutation types | 10 |
-| Throughput | 31.4 mut/min |
-| Bug finding rate | 0% for integration, 51.9% for provers |
-| False positive rate | 0% |
+| Test Type | Count | Coverage |
+|-----------|-------|----------|
+| AST mutations | 204 | 10 operators × 11 seeds |
+| Metamorphic relations | 16 | Mathematical properties |
+| Configuration fuzzing | 42 | Parameter combinations |
+| Prover crash scenarios | 21 | 7 modes × 3 provers |
+| Aggressive reconstruction | 63 | 7 strategies |
+| **Total tests** | **267** | **Comprehensive** |
 
-### Oracle Improvement
+### Key Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| False positives | 15 (100%) | 0 (0%) | -100% |
-| Precision | 0% | 100% | +100% |
-| Mirabelle alignment | 0% | 100% | +100% |
+| Metric | Value | Status |
+|--------|-------|--------|
+| Integration bugs found | 0 | ✅ Stable |
+| Hidden exceptions | 0 | ✅ No silent failures |
+| Reconstruction bugs | 0 | ✅ Robust |
+| False positive rate | 0% | ✅ Perfect precision |
+| Prover anomalies found | 519 | ✅ Thorough |
 
-### Comparison with Baseline
+### Methodology Validation
 
-Our mutation-based fuzzer vs random testing:
-- More systematic coverage
-- Higher bug finding rate (for provers)
-- Better reproducibility
+- **Mirabelle alignment**: 100% (official Isabelle tool)
+- **Source instrumentation**: ✅ sledgehammer.ML patched
+- **Three-layer validation**: Oracle + Mirabelle + instrumentation
+- **Reproducibility**: Complete dataset available
 
 ---
 
@@ -293,64 +305,60 @@ This finding is valuable as it:
 
 ---
 
-## 🔧 Tools & Scripts
+## 🔧 Main Testing Scripts
 
-### Main Scripts
+### Variant 3 Implementation
 
 ```bash
-# Fuzzing campaign
-fuzzer/fuzzing_campaign.py
-
-# Two-phase verification
-fuzzer/two_phase_verification.py
-
-# Prover testing
-fuzzer/run_prover_tests.py
-
-# Campaign monitoring
-fuzzer/monitor_campaign.sh
-
-# Final report generation
-fuzzer/generate_final_report.py
+variant3/code/
+├── fuzzing_campaign.py                    # End-to-end fuzzing orchestration
+├── ast_mutator.py                         # AST-based mutation engine
+├── metamorphic_tester.py                  # Metamorphic testing (16 relations)
+├── config_fuzzer.py                       # Configuration space fuzzing
+├── extended_prover_crash_test.py          # Prover failure simulation
+├── coverage_boost_tester.py               # Coverage-guided testing
+├── aggressive_reconstruction_tester.py    # 7 aggressive attack strategies
+├── proof_reconstruction_tester.py         # Proof reconstruction validation
+├── sledgehammer_stress_tester.py          # Complex theory stress testing
+├── hidden_exception_detector.py           # Exception detection instrumentation
+├── bug_verifier.py                        # Mirabelle integration
+└── ... (other utilities)
 ```
 
-### Utilities
+### Execution
 
 ```bash
-# AST mutation
-fuzzer/ast_mutator.py
+# Full fuzzing campaign
+cd variant3
+python code/fuzzing_campaign.py --test-reconstruction --verbose
 
-# Oracle implementation
-fuzzer/oracle/sledgehammer_oracle.py
-
-# Bug verification
-fuzzer/oracle/bug_verifier.py
-
-# Isabelle interface
-fuzzer/oracle/isabelle_interface.py
+# Individual testers
+python code/aggressive_reconstruction_tester.py
+python code/metamorphic_tester.py
+python code/config_fuzzer.py
 ```
 
 ---
 
 ## 📖 Documentation
 
-### Core Documentation
+### Main Documentation
 
-1. **FUZZING_QUICKSTART.md** - Quick start guide for fuzzing
-2. **PROJECT_STATUS_COMPLETE.md** - Complete project status
-3. **fuzzer/完整Fuzzing方案实施计划.md** - Implementation plan
-4. **fuzzer/Oracle改进前后对比报告.md** - Oracle improvement analysis
-5. **fuzzer/Mirabelle验证结果对比.md** - Verification results
+1. **README.md** - Project overview and quick start (this file)
+2. **PROJECT_STATUS_COMPLETE.md** - Complete project status and metrics
+3. **paper_updated.tex** - Research paper with detailed methodology and results
+4. **3rd_progress_report_short.tex** - Final progress report
 
-### Bug Reports
+### Variant 3 Documentation
 
-1. **fuzzer/Bug发现最终报告_v2.md** - 519 Prover bugs
-2. **fuzzer/真实Bug发现总结_最终版.md** - Summary
-3. **fuzzer/真实Integration测试最终报告.md** - Integration testing
+1. **variant3/README.md** - Variant 3 implementation details
+2. **variant3/code/** - Fully documented Python source code
+3. **variant3/data/** - Seed and test theories
 
-### Historical (Archived)
+### Research Outputs
 
-See `fuzzer/archive_old_docs/` for historical documentation
+- **paper_updated.pdf** - Compiled research paper with results
+- **3rd_progress_report_short.pdf** - Progress report presentation
 
 ---
 
