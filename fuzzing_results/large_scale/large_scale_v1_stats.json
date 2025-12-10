@@ -1,0 +1,17 @@
+{
+  "campaign_name": "large_scale_v1",
+  "start_time": 1763931373.878966,
+  "end_time": 1763931570.869348,
+  "seed_theories": 10,
+  "mutations_generated": 105,
+  "mutations_tested": 105,
+  "bugs_found": 0,
+  "bugs_verified": 0,
+  "false_positives": 0,
+  "unique_error_types": 0,
+  "mutation_types_used": 8,
+  "avg_test_time": 1.8758634907858713,
+  "total_time": 196.99038195610046,
+  "bug_finding_rate": 0.0,
+  "verification_precision": 0.0
+}
